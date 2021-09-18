@@ -28,8 +28,8 @@ object BasicFirstExampleSimulation {
     
     val vmList = createVms()
     val cloudletList = createCloudlets()
-    broker0.
-      submitVmList(vmList.asJava)
+    broker0
+      .submitVmList(vmList.asJava)
       .submitCloudletList(cloudletList.asJava)
     
     simulation.start();
