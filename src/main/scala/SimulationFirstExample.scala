@@ -1,8 +1,8 @@
 import HelperUtils.CreateLogger
-import Simulations.{BasicFirstExampleSimulation}
+import Simulations.Basics.BasicFirstExampleSimulation
 
 object SimulationFirstExample:
-  val logger = CreateLogger(classOf[Simulation])
+  val logger = CreateLogger(classOf[SimulationFirstExample])
 
   @main def runSimulationFirstExample =
     logger.info("Constructing a cloud model...")

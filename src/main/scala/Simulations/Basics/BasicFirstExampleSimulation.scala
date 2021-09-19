@@ -1,4 +1,4 @@
-package Simulations
+package Simulations.Basics
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple
@@ -13,27 +13,29 @@ import org.cloudsimplus.builders.tables.CloudletsTableBuilder
 
 import scala.jdk.CollectionConverters.*
 
+class BasicFirstExampleSimulation
+
 object BasicFirstExampleSimulation {
   val config = ObtainConfigReference("cloudSimulator2") match {
     case Some(value) => value
     case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
   }
-  val logger = CreateLogger(classOf[BasicCloudSimPlusExample])
+  val logger = CreateLogger(classOf[BasicFirstExampleSimulation])
 
   def Start() = {
     val simulation = new CloudSim()
     val datacenter0 = createDatacenter(simulation)
-    
+
     val broker0 = new DatacenterBrokerSimple(simulation)
-    
+
     val vmList = createVms()
     val cloudletList = createCloudlets()
     broker0
       .submitVmList(vmList.asJava)
       .submitCloudletList(cloudletList.asJava)
-    
+
     simulation.start();
-    
+
     val finishedCloudlets = broker0.getCloudletFinishedList()
     new CloudletsTableBuilder(finishedCloudlets).build()
   }
@@ -42,7 +44,7 @@ object BasicFirstExampleSimulation {
     val numOfHosts = config.getInt("cloudSimulator2.host.size")
     val range = 1 to numOfHosts
     val hostList: List[Host] = range.map(i => createHost()).toList
-    
+
     new DatacenterSimple(simulation, hostList.asJava);
   }
 
@@ -71,7 +73,7 @@ object BasicFirstExampleSimulation {
     val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("cloudSimulator2.utilizationRatio"))
     val cloudletLength = config.getInt("cloudSimulator2.cloudlet.length")
     val cloudletPEs = config.getInt("cloudSimulator2.cloudlet.PEs")
-    (1 to numOfCloudlets).map(i => 
+    (1 to numOfCloudlets).map(i =>
       new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel).setSizes(1024)).toList
   }
 }

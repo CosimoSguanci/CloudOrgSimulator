@@ -1,7 +1,6 @@
-package utils
+package Utils
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Simulations.BasicCloudSimPlusExample
 import Simulations.SimulationSuiteServices.config
 import org.cloudbus.cloudsim.resources.{Bandwidth, Processor, Ram}
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
@@ -17,13 +16,13 @@ enum ScalingStrategy:
 
 object VmWithScalingFactory {
   def apply(scalingStrategyId: Int): Vm = { // vm storage?
-    
-/*    val config = ObtainConfigReference("simulationSuiteServices") match {
-      case Some(value) => value
-      case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
-    }
-    val logger = CreateLogger(classOf[BasicCloudSimPlusExample])*/
-    
+
+    /*    val config = ObtainConfigReference("simulationSuiteServices") match {
+          case Some(value) => value
+          case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
+        }
+        val logger = CreateLogger(classOf[BasicCloudSimPlusExample])*/
+
     val vm = createVm()
 
     val scalingStrategy: ScalingStrategy = mapScalingIdToStrategy(scalingStrategyId);
@@ -74,7 +73,7 @@ object VmWithScalingFactory {
     val ramVerticalScalingEnabled: Boolean = config.getInt("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.enabled") == 1
     val bwVerticalScalingEnabled: Boolean = config.getInt("simulationSuiteServices.vm.autoscaling.bwVerticalScaling.enabled") == 1
 
-    if(cpuVerticalScalingEnabled) {
+    if (cpuVerticalScalingEnabled) {
       val cpuVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Processor], config.getDouble("simulationSuiteServices.vm.autoscaling.cpuVerticalScaling.scalingFactor"))
       cpuVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 
@@ -92,7 +91,7 @@ object VmWithScalingFactory {
       vm.setPeVerticalScaling(cpuVerticalScaling);
     }
 
-    if(ramVerticalScalingEnabled) {
+    if (ramVerticalScalingEnabled) {
       val ramVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Ram], config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.scalingFactor"))
       ramVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 
@@ -110,7 +109,7 @@ object VmWithScalingFactory {
       vm.setPeVerticalScaling(ramVerticalScaling);
     }
 
-    if(bwVerticalScalingEnabled) {
+    if (bwVerticalScalingEnabled) {
       val bwVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Bandwidth], config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.scalingFactor"))
       bwVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 

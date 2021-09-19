@@ -1,7 +1,7 @@
 package Simulations
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Simulations.BasicFirstExampleSimulation.config
+import Utils.{ScalingStrategy, VmWithScalingFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -10,12 +10,12 @@ import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.datacenters.{Datacenter, DatacenterSimple}
 import org.cloudbus.cloudsim.distributions.{ContinuousDistribution, UniformDistr}
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
+import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
 import org.cloudbus.cloudsim.resources.*
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
 import org.cloudbus.cloudsim.vms.{Vm, VmCost, VmSimple}
 import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.CloudletsTableBuilder
-import utils.{ScalingStrategy, VmWithScalingFactory}
 
 import scala.::
 import scala.jdk.CollectionConverters.*
@@ -27,7 +27,7 @@ object SimulationSuiteServices:
     case Some(value) => value
     case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
   }
-  val logger = CreateLogger(classOf[BasicCloudSimPlusExample])
+  val logger = CreateLogger(classOf[SimulationSuiteServices])
 
   def Start() = {
     val simulation = new CloudSim()
@@ -171,7 +171,7 @@ object SimulationSuiteServices:
                  bwTotalCost: Double,
                  totalNonIdleVms: Int): Unit = {
 
-    if(i == broker.getVmCreatedList().size()) {
+    if (i == broker.getVmCreatedList().size()) {
       // finished iterating over vms, we print the final report
       println("Total cost ($) for " + totalNonIdleVms +
         " created VMs from " + broker.getVmsNumber() + ": " +
@@ -193,8 +193,8 @@ object SimulationSuiteServices:
     val newMemoryTotalCost: Double = memoryTotalCost + vmCost.getMemoryCost()
     val newStorageTotalCost: Double = storageTotalCost + vmCost.getStorageCost()
     val newBwTotalCost: Double = bwTotalCost + vmCost.getBwCost()
-    val newTotalNonIdleVms: Int = if(vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
+    val newTotalNonIdleVms: Int = if (vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
 
-    printCost(i+1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
+    printCost(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
   }
 
