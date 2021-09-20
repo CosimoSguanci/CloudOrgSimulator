@@ -3,6 +3,7 @@ package Utils
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Simulations.SimulationSuiteServices.config
 import org.cloudbus.cloudsim.resources.{Bandwidth, Processor, Ram}
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerTimeShared, CloudletSchedulerSpaceShared}
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
 import org.cloudsimplus.autoscaling.resources.{ResourceScalingGradual, ResourceScalingInstantaneous}
 import org.cloudsimplus.autoscaling.{HorizontalVmScalingSimple, VerticalVmScalingSimple, VmScaling}
@@ -17,7 +18,7 @@ enum ScalingStrategy:
 object VmWithScalingFactory {
   def apply(scalingStrategyId: Int): Vm = { // vm storage?
 
-    /*    val config = ObtainConfigReference("simulationSuiteServices") match {
+    /*    val config = ObtainConfigReference("saasSimulation") match {
           case Some(value) => value
           case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
         }
@@ -39,42 +40,44 @@ object VmWithScalingFactory {
   }
 
   def createVm(): Vm = {
-    val hostMips = config.getInt("simulationSuiteServices.host.mipsCapacity")
-    val vmPEs = config.getInt("simulationSuiteServices.vm.PEs")
-    val ramInMBs = config.getInt("simulationSuiteServices.vm.RAMInMBs")
-    val storageInMBs = config.getLong("simulationSuiteServices.vm.StorageInMBs")
-    val bwInMBps = config.getInt("simulationSuiteServices.vm.BandwidthInMBps")
+    val hostMips = config.getInt("saasSimulation.host.mipsCapacity")
+    val vmPEs = config.getInt("saasSimulation.vm.PEs")
+    val ramInMBs = config.getInt("saasSimulation.vm.RAMInMBs")
+    val storageInMBs = config.getLong("saasSimulation.vm.StorageInMBs")
+    val bwInMBps = config.getInt("saasSimulation.vm.BandwidthInMBps")
 
     new VmSimple(hostMips, vmPEs)
       .setRam(ramInMBs)
       .setBw(bwInMBps)
       .setSize(storageInMBs)
+      .setCloudletScheduler(new CloudletSchedulerSpaceShared()) // default is time shared and is much less efficient in this case
   }
 
   def isVmOverloaded(vm: Vm): Boolean = {
-    val cpuOverloadingThreshold = config.getDouble("simulationSuiteServices.vm.autoscaling.horizontalScaling.cpuOverloadedThreshold")
+    val cpuOverloadingThreshold = config.getDouble("saasSimulation.vm.autoscaling.horizontalScaling.cpuOverloadedThreshold")
     vm.getCpuPercentUtilization() > cpuOverloadingThreshold
   }
 
   def buildHorizontalScaling(vm: Vm): Vm = {
     val horizontalScaling: HorizontalVmScalingSimple = new HorizontalVmScalingSimple();
-    horizontalScaling
+/*    horizontalScaling
       .setVmSupplier(new Supplier[Vm] {
         override def get(): Vm = createVm()
       })
       .setOverloadPredicate(new Predicate[Vm] {
         override def test(t: Vm): Boolean = isVmOverloaded(t)
-      })
+      })*/
+    horizontalScaling.setVmSupplier(() => createVm()).setOverloadPredicate(isVmOverloaded)
     vm.setHorizontalScaling(horizontalScaling)
   }
 
   def buildVerticalScaling(vm: Vm): Vm = {
-    val cpuVerticalScalingEnabled: Boolean = config.getInt("simulationSuiteServices.vm.autoscaling.cpuVerticalScaling.enabled") == 1
-    val ramVerticalScalingEnabled: Boolean = config.getInt("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.enabled") == 1
-    val bwVerticalScalingEnabled: Boolean = config.getInt("simulationSuiteServices.vm.autoscaling.bwVerticalScaling.enabled") == 1
+    val cpuVerticalScalingEnabled: Boolean = config.getInt("saasSimulation.vm.autoscaling.cpuVerticalScaling.enabled") == 1
+    val ramVerticalScalingEnabled: Boolean = config.getInt("saasSimulation.vm.autoscaling.ramVerticalScaling.enabled") == 1
+    val bwVerticalScalingEnabled: Boolean = config.getInt("saasSimulation.vm.autoscaling.bwVerticalScaling.enabled") == 1
 
     if (cpuVerticalScalingEnabled) {
-      val cpuVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Processor], config.getDouble("simulationSuiteServices.vm.autoscaling.cpuVerticalScaling.scalingFactor"))
+      val cpuVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Processor], config.getDouble("saasSimulation.vm.autoscaling.cpuVerticalScaling.scalingFactor"))
       cpuVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 
       val lowerThresholdFunction: java.util.function.Function[Vm, java.lang.Double] = new java.util.function.Function[Vm, java.lang.Double] {
@@ -92,7 +95,7 @@ object VmWithScalingFactory {
     }
 
     if (ramVerticalScalingEnabled) {
-      val ramVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Ram], config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.scalingFactor"))
+      val ramVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Ram], config.getDouble("saasSimulation.vm.autoscaling.ramVerticalScaling.scalingFactor"))
       ramVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 
       val lowerThresholdFunction: java.util.function.Function[Vm, java.lang.Double] = new java.util.function.Function[Vm, java.lang.Double] {
@@ -110,7 +113,7 @@ object VmWithScalingFactory {
     }
 
     if (bwVerticalScalingEnabled) {
-      val bwVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Bandwidth], config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.scalingFactor"))
+      val bwVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Bandwidth], config.getDouble("saasSimulation.vm.autoscaling.ramVerticalScaling.scalingFactor"))
       bwVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
 
       val lowerThresholdFunction: java.util.function.Function[Vm, java.lang.Double] = new java.util.function.Function[Vm, java.lang.Double] {
@@ -133,27 +136,27 @@ object VmWithScalingFactory {
 
   // threshold to determine if the vm is underloaded
   def cpuLowerUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.cpuVerticalScaling.lowerUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.cpuVerticalScaling.lowerUtilizationThreshold")
   }
 
   def cpuUpperUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.cpuVerticalScaling.upperUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.cpuVerticalScaling.upperUtilizationThreshold")
   }
 
   def ramLowerUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.lowerUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.ramVerticalScaling.lowerUtilizationThreshold")
   }
 
   def ramUpperUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.ramVerticalScaling.upperUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.ramVerticalScaling.upperUtilizationThreshold")
   }
 
   def bwLowerUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.bwVerticalScaling.lowerUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.bwVerticalScaling.lowerUtilizationThreshold")
   }
 
   def bwUpperUtilizationThreshold(): Double = {
-    return config.getDouble("simulationSuiteServices.vm.autoscaling.bwVerticalScaling.upperUtilizationThreshold")
+    return config.getDouble("saasSimulation.vm.autoscaling.bwVerticalScaling.upperUtilizationThreshold")
   }
 
   def mapScalingIdToStrategy(id: Int): ScalingStrategy = {

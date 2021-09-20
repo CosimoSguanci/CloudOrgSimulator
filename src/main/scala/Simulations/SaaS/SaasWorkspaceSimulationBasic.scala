@@ -1,5 +1,6 @@
-package Simulations
+package Simulations.SaaS
 
+import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.{ScalingStrategy, SuiteServicesCloudlet, TypeOfService, VmWithScalingFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicySimple}
@@ -23,26 +24,19 @@ import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
 import scala.::
 import scala.jdk.CollectionConverters.*
 
-class SimulationSuiteServices
+class SaasWorkspaceSimulationBasic
 
-object SimulationSuiteServices:
+object SaasWorkspaceSimulationBasic:
 
-  //val random: ContinuousDistribution = new UniformDistr()
-  //val cloudlets: List[SuiteServicesCloudlet] = new List()
+  val CONFIG = "saasSimulationWorkspaceBasic";
 
-  val config = ObtainConfigReference("saasSimulation") match {
-    case Some(value) => value
-    case None => throw new RuntimeException("Cannot obtain a reference to the config data.")
-  }
-
-  val logger = CreateLogger(classOf[SimulationSuiteServices])
+  val config: Config = ConfigFactory.load(s"$CONFIG.conf")
+  val logger = CreateLogger(classOf[SaasWorkspaceSimulationBasic])
 
   def Start() = {
     val simulation = new CloudSim()
 
-    //val timeToTerminateSimulation = config.getInt("saasSimulation.duration")
-    //simulation.terminateAt(timeToTerminateSimulation)
-    val numOfDatacenters = config.getInt("saasSimulation.datacenter.num")
+    val numOfDatacenters = config.getInt("datacenter.num")
 
     val datacenters: List[Datacenter] = createDatacenters(simulation, List.empty, numOfDatacenters)
     val datacenterStorageList: List[DatacenterStorage] = createDatacenterStorage(numOfDatacenters);
@@ -60,23 +54,10 @@ object SimulationSuiteServices:
     setupFileRequirementsForCloudlets(cloudletlist);
 
     val broker0 = new DatacenterBrokerSimple(simulation) // best fit
-/*    broker0.setVmDestructionDelayFunction(new java.util.function.Function[Vm, java.lang.Double] {
-      override def apply(vm: Vm): java.lang.Double = 10.0
-    })*/
+
     broker0.submitVmList(vmList.asJava)
     broker0.submitCloudletList(cloudletlist.asJava)
 
-    // Multiple brokers means multiple customers to be served
-    /*val vmList1: List[Vm] = createVms()
-    val cloudletlist1: List[SuiteServicesCloudlet] = createCloudletsTest()
-
-    setupFileRequirementsForCloudlets(cloudletlist1);
-
-    val broker1 = new DatacenterBrokerSimple(simulation)
-    broker1.submitVmList(vmList1.asJava)
-    broker1.submitCloudletList(cloudletlist1.asJava)
-
-    simulation.addOnClockTickListener()*/
     simulation.start();
 
     val finishedCloudlets = broker0.getCloudletFinishedList()
@@ -91,9 +72,7 @@ object SimulationSuiteServices:
     }).build();
 
 
-
-
-    //printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
   }
 
   def createDatacenters(simulation: CloudSim, datacenters: List[NetworkDatacenter], numOfDatacenters: Int): List[NetworkDatacenter] = {
@@ -108,7 +87,7 @@ object SimulationSuiteServices:
   }
 
   def createDatacenter(simulation: CloudSim): NetworkDatacenter = {
-    val numOfHosts = config.getInt("saasSimulation.host.num")
+    val numOfHosts = config.getInt("host.num")
     val range = 1 to numOfHosts
     val hostList: List[Host] = range.map(i => createHost()).toList
 
@@ -118,23 +97,23 @@ object SimulationSuiteServices:
 
     datacenter
       .getCharacteristics()
-      .setCostPerSecond(config.getDouble("saasSimulation.datacenter.costPerSecond"))
-      .setCostPerMem(config.getDouble("saasSimulation.datacenter.costPerMem"))
-      .setCostPerStorage(config.getDouble("saasSimulation.datacenter.costPerStorage"))
-      .setCostPerBw(config.getDouble("saasSimulation.datacenter.costPerBw"));
+      .setCostPerSecond(config.getDouble("datacenter.costPerSecond"))
+      .setCostPerMem(config.getDouble("datacenter.costPerMem"))
+      .setCostPerStorage(config.getDouble("datacenter.costPerStorage"))
+      .setCostPerBw(config.getDouble("datacenter.costPerBw"));
 
     //datacenter.setSchedulingInterval(100)
     return datacenter
   }
 
   def createHost(): Host = {
-    val numOfHostPEs = config.getInt("saasSimulation.host.PEs")
+    val numOfHostPEs = config.getInt("host.PEs")
     val range = 1 to numOfHostPEs
-    val peList: List[Pe] = range.map(i => new PeSimple(config.getInt("saasSimulation.host.mipsCapacity"))).toList
+    val peList: List[Pe] = range.map(i => new PeSimple(config.getInt("host.mipsCapacity"))).toList
 
-    val hostRam = config.getLong("saasSimulation.host.RAMInMBs")
-    val hostBw = config.getLong("saasSimulation.host.BandwidthInMBps")
-    val hostStorage = config.getLong("saasSimulation.host.StorageInMBs")
+    val hostRam = config.getLong("host.RAMInMBs")
+    val hostBw = config.getLong("host.BandwidthInMBps")
+    val hostStorage = config.getLong("host.StorageInMBs")
     val host = new HostSimple(hostRam, hostBw, hostStorage, peList.asJava) // default vm scheduler: VmSchedulerSpaceShared
 
     host
@@ -144,10 +123,10 @@ object SimulationSuiteServices:
   }
 
   def createDatacenterStorage(numOfDatacenters: Int): List[DatacenterStorage] = {
-    val numOfSanForDatacenter = config.getInt("saasSimulation.datacenter.numOfSanForDatacenter")
-    val sanStorageCapacity = config.getLong("saasSimulation.datacenter.sanStorageCapacityForDatacenter")
-    val sanBW = config.getDouble("saasSimulation.datacenter.sanBWInMBps")
-    val sanNetworkLatency = config.getDouble("saasSimulation.datacenter.sanNetworkLatencySec")
+    val numOfSanForDatacenter = config.getInt("datacenter.numOfSanForDatacenter")
+    val sanStorageCapacity = config.getLong("datacenter.sanStorageCapacityForDatacenter")
+    val sanBW = config.getDouble("datacenter.sanBWInMBps")
+    val sanNetworkLatency = config.getDouble("datacenter.sanNetworkLatencySec")
 
     val range = 1 to numOfDatacenters
 
@@ -160,11 +139,11 @@ object SimulationSuiteServices:
   }
 
   def addFilesToSan(san: SanStorage): Unit = {
-    //val numOfStoredFiles = config.getInt("saasSimulation.datacenter.numOfStoredFiles")
-    val numOfStoredFiles = config.getInt("saasSimulation.cloudlet.numStorageCloudlets") // for every cloudlet relative to the cloud storage service, we add a file for the simulation
-    val sizeSmall = config.getInt("saasSimulation.datacenter.sanFileSizeInMB_small")
-    val sizeMedium = config.getInt("saasSimulation.datacenter.sanFileSizeInMB_medium")
-    val sizeBig = config.getInt("saasSimulation.datacenter.sanFileSizeInMB_big")
+    //val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
+    val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets") // for every cloudlet relative to the cloud storage service, we add a file for the simulation
+    val sizeSmall = config.getInt("datacenter.sanFileSizeInMB_small")
+    val sizeMedium = config.getInt("datacenter.sanFileSizeInMB_medium")
+    val sizeBig = config.getInt("datacenter.sanFileSizeInMB_big")
 
     val range = 1 to numOfStoredFiles
 
@@ -176,16 +155,16 @@ object SimulationSuiteServices:
   }
 
   def createVms(): List[Vm] = {
-    val scalingStrategyId = config.getInt("saasSimulation.vm.autoscaling.scalingStrategy");
-    val numOfVMs = config.getInt("saasSimulation.vm.num")
+    val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
+    val numOfVMs = config.getInt("vm.num")
     val range = 1 to numOfVMs
     range.map(i => VmWithScalingFactory(scalingStrategyId)).toList
   }
 
   def createCloudlets(): List[SuiteServicesCloudlet] = {
-    val numOfEmailCloudlets = config.getInt("saasSimulation.cloudlet.numEmailCloudlets")
-    val numOfDocsCloudlets = config.getInt("saasSimulation.cloudlet.numDocsCloudlets")
-    val numOfStorageCloudlets = config.getInt("saasSimulation.cloudlet.numStorageCloudlets")
+    val numOfEmailCloudlets = config.getInt("cloudlet.numEmailCloudlets")
+    val numOfDocsCloudlets = config.getInt("cloudlet.numDocsCloudlets")
+    val numOfStorageCloudlets = config.getInt("cloudlet.numStorageCloudlets")
 
     val emailCloudlets: List[SuiteServicesCloudlet] = (1 to numOfEmailCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
     val docsCloudlets: List[SuiteServicesCloudlet] = (1 to numOfDocsCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.CLOUD_DOCS)).toList
@@ -194,38 +173,38 @@ object SimulationSuiteServices:
     emailCloudlets ::: docsCloudlets ::: storageCloudlets
   }
 
-/*  def createCloudlets(): List[Cloudlet] = {
-    val numOfCloudlets = config.getInt("saasSimulation.cloudlet.num")
-    val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))
-    val cloudletLength = config.getInt("saasSimulation.cloudlet.length")
-    val cloudletPEs = config.getInt("saasSimulation.cloudlet.PEs")
-    (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
-  }
-
-  def createCloudletsTest(): List[SuiteServicesCloudlet] = {
-    val numOfCloudlets = config.getInt("saasSimulation.cloudlet.num")
-    (1 to numOfCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
-  }
-
-  def createCloudlets2(): List[SuiteServicesCloudlet] = {
-    val numOfCloudlets = config.getInt("saasSimulation.cloudlet.num")
-    val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))
-    val cloudletLength = config.getInt("saasSimulation.cloudlet.length")
-    val cloudletPEs = config.getInt("saasSimulation.cloudlet.PEs")
-    (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
-  }*/
-
-/*  def createRandomCloudlets(evt: EventInfo): Unit = { // dynamic arrival of new tasks to be processed
-    val probabilityOfNewArrival = config.getDouble("saasSimulation.cloudlet.probabilityOfNewArrival");
-    if(random.sample() <= probabilityOfNewArrival) {
-      //log
-
+  /*  def createCloudlets(): List[Cloudlet] = {
+      val numOfCloudlets = config.getInt("cloudlet.num")
+      val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+      val cloudletLength = config.getInt("cloudlet.length")
+      val cloudletPEs = config.getInt("cloudlet.PEs")
+      (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
     }
-  }*/
+
+    def createCloudletsTest(): List[SuiteServicesCloudlet] = {
+      val numOfCloudlets = config.getInt("cloudlet.num")
+      (1 to numOfCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
+    }
+
+    def createCloudlets2(): List[SuiteServicesCloudlet] = {
+      val numOfCloudlets = config.getInt("cloudlet.num")
+      val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+      val cloudletLength = config.getInt("cloudlet.length")
+      val cloudletPEs = config.getInt("cloudlet.PEs")
+      (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
+    }*/
+
+  /*  def createRandomCloudlets(evt: EventInfo): Unit = { // dynamic arrival of new tasks to be processed
+      val probabilityOfNewArrival = config.getDouble("cloudlet.probabilityOfNewArrival");
+      if(random.sample() <= probabilityOfNewArrival) {
+        //log
+
+      }
+    }*/
 
   def setupFileRequirementsForCloudlets(cloudletList: List[SuiteServicesCloudlet]): Unit = {
-    //val numOfStoredFiles = config.getInt("saasSimulation.datacenter.numOfStoredFiles")
-    val numOfStoredFiles = config.getInt("saasSimulation.cloudlet.numStorageCloudlets")
+    //val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
+    val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets")
     val range = 1 to numOfStoredFiles
 
     cloudletList.filter(c => c.typeOfService == TypeOfService.CLOUD_STORAGE).lazyZip(range).map {
