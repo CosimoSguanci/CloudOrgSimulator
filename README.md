@@ -63,15 +63,15 @@ The last type of task differs from the other regarding the main resource needed,
 - costPerMem = 0.02
 - costPerStorage = 0.001
 - costPerBw = 0.005
-- Number of hosts per datacenter = 100
+- Number of hosts per datacenter = 25
 - Host (AMD Epyc 7313P taken as reference):
   - 16 core
   - 150000 MIPS per core
-- Number of VMs to be allocated = 250
+- Number of VMs to be allocated = 120
 - Number of tasks (cloudlets):
-  - numEmailCloudlets = 50
-  - numDocsCloudlets = 50
-  - numStorageCloudlets = 25
+  - numEmailCloudlets = 100
+  - numDocsCloudlets = 100
+  - numStorageCloudlets = 100
 - No autoscaling
 
 ### SaasWorkspaceSimulationBasic
@@ -79,8 +79,30 @@ The last type of task differs from the other regarding the main resource needed,
 #### Policies
 This simulation makes use of the most basic policies, such as:
 - `VmAllocationPolicySimple` to allocate VMs to Hosts
-- `VmScheduler` to allocate host PEs to VMs
+- `VmSchedulerSpaceShared` to allocate host PEs to VMs
 - `CloudletSchedulerTimeShared` to schedule Cloudlets to be executed on VMs
 
 #### Results
 Results have been measured both in terms of Cloudlets execution time and costs.
+
+```
+Time to execute all cloudlets: 122978347 s
+Total cost: 2.95E8$
+```
+
+The first result that has been found is that, with the basic configuration, the execution time of tasks tends to explode, and consequently are also processing cost. This is mainly due to the `CloudletSchedulerTimeShared`, as will be clear in the next simulation. Obviously, these results are not feasible in a real world scenario, so it is necessary to change some policies in the model.
+
+### SaasWorkspaceSimulationImproved
+
+
+#### Results
+Simply by changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice an enormous improvement:
+
+```
+Time to execute all cloudlets: 40 s
+Total cost: 2046.62$
+```
+
+This is due to the fact that in the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicate a small slice time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
+
+

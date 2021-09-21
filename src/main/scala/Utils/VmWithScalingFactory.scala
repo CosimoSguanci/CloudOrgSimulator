@@ -1,7 +1,7 @@
 package Utils
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Simulations.SimulationSuiteServices.config
+import Simulations.SaaS.SaasWorkspaceSimulationBasic.config
 import org.cloudbus.cloudsim.resources.{Bandwidth, Processor, Ram}
 import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerTimeShared, CloudletSchedulerSpaceShared}
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
@@ -40,17 +40,17 @@ object VmWithScalingFactory {
   }
 
   def createVm(): Vm = {
-    val hostMips = config.getInt("saasSimulation.host.mipsCapacity")
-    val vmPEs = config.getInt("saasSimulation.vm.PEs")
-    val ramInMBs = config.getInt("saasSimulation.vm.RAMInMBs")
-    val storageInMBs = config.getLong("saasSimulation.vm.StorageInMBs")
-    val bwInMBps = config.getInt("saasSimulation.vm.BandwidthInMBps")
+    val hostMips = config.getInt("host.mipsCapacityPE")
+    val vmPEs = config.getInt("vm.PEs")
+    val ramInMBs = config.getInt("vm.RAMInMBs")
+    val storageInMBs = config.getLong("vm.StorageInMBs")
+    val bwInMBps = config.getInt("vm.BandwidthInMBps")
 
     new VmSimple(hostMips, vmPEs)
       .setRam(ramInMBs)
       .setBw(bwInMBps)
       .setSize(storageInMBs)
-      .setCloudletScheduler(new CloudletSchedulerSpaceShared()) // default is time shared and is much less efficient in this case
+      //.setCloudletScheduler(new CloudletSchedulerTimeShared()) // default is time shared and is much less efficient in this case
   }
 
   def isVmOverloaded(vm: Vm): Boolean = {

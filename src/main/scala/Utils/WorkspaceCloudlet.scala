@@ -1,17 +1,17 @@
 package Utils
 
-import Simulations.SimulationSuiteServices.config
+import Simulations.SaaS.SaasWorkspaceSimulationBasic.config
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
+import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelDynamic, UtilizationModelFull}
 
 enum TypeOfService:
   case EMAIL, CLOUD_DOCS, CLOUD_STORAGE
 
 class SuiteServicesCloudlet(val typeOfService: TypeOfService)
   extends CloudletSimple(
-    config.getInt("saasSimulation.cloudlet.length"),
-    config.getInt("saasSimulation.cloudlet.PEs"),
-    new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))) {
+    config.getInt("cloudlet.length"),
+    config.getInt("cloudlet.PEs"),
+    new UtilizationModelDynamic(config.getDouble("utilizationRatio"))) { // new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))
   
   def getTypeOfServiceText(): String = {
     typeOfService match {

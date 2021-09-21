@@ -3,7 +3,7 @@ package Simulations.SaaS
 import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.{ScalingStrategy, SuiteServicesCloudlet, TypeOfService, VmWithScalingFactory}
-import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicySimple}
+import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
@@ -20,14 +20,14 @@ import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
 import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerTimeShared, CloudletSchedulerSpaceShared}
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
 import scala.::
 import scala.jdk.CollectionConverters.*
 
-class SaasWorkspaceSimulationBasic
+class SaasWorkspaceSimulationImproved
 
-object SaasWorkspaceSimulationBasic:
+object SaasWorkspaceSimulationImproved:
 
   val CONFIG = "saasSimulationWorkspaceBasic";
 
@@ -54,7 +54,7 @@ object SaasWorkspaceSimulationBasic:
 
     setupFileRequirementsForCloudlets(cloudletlist);
 
-    val broker0 = new DatacenterBrokerSimple(simulation) // best fit
+     val broker0 = new DatacenterBrokerSimple(simulation) // best fit
 
     broker0.submitVmList(vmList.asJava)
     broker0.submitCloudletList(cloudletlist.asJava)
@@ -92,8 +92,8 @@ object SaasWorkspaceSimulationBasic:
     val hostList: List[Host] = range.map(i => createHost()).toList
 
 
-    //val random: ContinuousDistribution = new UniformDistr();
-    val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, new VmAllocationPolicySimple()) // new VmAllocationPolicyRandom(random)
+    val random: ContinuousDistribution = new UniformDistr();
+    val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, new VmAllocationPolicyFirstFit()) // new VmAllocationPolicyRandom(random)
 
     datacenter
       .getCharacteristics()
@@ -158,7 +158,7 @@ object SaasWorkspaceSimulationBasic:
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfVMs = config.getInt("vm.num")
     val range = 1 to numOfVMs
-    range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(new CloudletSchedulerTimeShared())).toList
+    range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(new CloudletSchedulerSpaceShared())).toList
   }
 
   def createCloudlets(): List[SuiteServicesCloudlet] = {
