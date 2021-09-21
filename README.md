@@ -55,10 +55,26 @@ In the model, the `CloudletSimple` class has been extended to be able to specify
 
 The last type of task differs from the other regarding the main resource needed, that is storage capability. These characteristics has been modeled by making each `Cloudlet` of this kind require a file (3 types of files can be requested, based on the size of the file itself). Files are maintained and provided to customers by making use of Storage Area Networks (SANs) in each datacenter.
 
+#### Main parameters
+- Number of datacenters = 2 
+- Number of SANs for each datacenter = 2 (each file is replicated in each datacenter)
+- SAN Bandwidth = 10 Gbps
+- costPerSecond (CPU) = 0.01
+- costPerMem = 0.02
+- costPerStorage = 0.001
+- costPerBw = 0.005
+- Number of hosts per datacenter = 100
+- Host (AMD Epyc 7313P taken as reference):
+  - 16 core
+  - 150000 MIPS per core
+- Number of VMs to be allocated = 250
+- Number of tasks (cloudlets):
+  - numEmailCloudlets = 50
+  - numDocsCloudlets = 50
+  - numStorageCloudlets = 25
+- No autoscaling
+
 ### SaasWorkspaceSimulationBasic
-
-#### Parameters
-
 
 #### Policies
 This simulation makes use of the most basic policies, such as:
