@@ -1,12 +1,12 @@
 import HelperUtils.CreateLogger
 import Simulations.SaaS.SaasWorkspaceSimulationBasic
 
-object RunSaasSimulationWorkspaceBasic:
-  val logger = CreateLogger(classOf[RunSaasSimulationWorkspaceBasic])
+object RunSaasWorkspaceSimulationBasic:
+  val logger = CreateLogger(classOf[RunSaasWorkspaceSimulationBasic])
 
-  @main def runSimulationSuiteServices =
+  @main def runSimulation =
     logger.info("Constructing a cloud model...")
     SaasWorkspaceSimulationBasic.Start()
     logger.info("Finished cloud simulation...")
 
-class RunSaasSimulationWorkspaceBasic
+class RunSaasWorkspaceSimulationBasic
