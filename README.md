@@ -96,7 +96,7 @@ The first result that has been found is that, with the basic configuration, the 
 
 
 #### Results
-Simply by changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice an enormous improvement:
+By changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice an enormous improvement:
 
 ```
 Time to execute all cloudlets: 40 s
@@ -105,4 +105,58 @@ Total cost: 2046.62$
 
 This is due to the fact that in the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicate a small slice time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
 
+### IaaS / PaaS / FaaS
+The second category of simulation that have been performed regard a cloud model that resembles a subset of the services offered by AWS. In particular, with respect to the previous simulation, this model is implementing a scenario of a larger scale, offering model flexibile services.
 
+### IaasPaasFaasSimulationBasic
+
+#### Main parameters
+- Number of datacenters = 10
+- Number of SANs for each datacenter = 5 (each file is replicated in each datacenter)
+- SAN Bandwidth = 10 Gbps
+- costPerSecond (CPU) = 0.01
+- costPerMem = 0.02
+- costPerStorage = 0.001
+- costPerBw = 0.005
+- Number of hosts per datacenter = 100
+- Host (AMD Epyc 7313P taken as reference):
+  - 16 core
+  - 150000 MIPS per core
+- Number of VMs to be allocated = 3000
+- Number of tasks (cloudlets):
+  - num of IaaS tasks = 2000
+  - num of PaaS tasks = 2000
+  - num of FaaS tasks = 2500
+- Autoscaling enabled
+
+#### Policies
+
+Due to the high level of configurability implemented in these simulations, autoscaling can be completely handle through configuration files. It is possible to enable horizontal scaling, vertical scaling, but also both in combination.
+
+In this model there is a clear distinction between IaaS/PaaS and FaaS tasks. Indeed, the former is a relatively new deployment model that has different requirements. In particular, FaaS cloudlets are much less expensive in terms of computing power, and they are allocated to specific lightweight VMs. To achieve this, a dedicated broker has been created to assign this kind of cloudlets to their specific VMs.
+To test elasticity capabilities that can be enforced by customers, the list of cloudlets is not static but changes during the simulation. Periodically, new cloudlets are added to the queue (the number of newly created tasks and the duration until they are created can be changed in configurations). For the first simulation:
+
+- 12 cloudlets are created (4 IaaS, 4 PaaS, 4 FaaS) every time the simulation clock advances
+- New cloudlets are added until the simulation clock arrives at 2.0
+
+The other policies employed are the following:
+
+- `VmAllocationPolicySimple` to allocate VMs to Hosts
+- `VmSchedulerSpaceShared` to allocate host PEs to VMs
+- `CloudletSchedulerSpaceShared` to schedule Cloudlets to be executed on VMs
+
+#### Results
+
+Without any scaling policy, the results are the following:
+
+```
+Total cost: 247350$
+Max execution time for cloudlet: 94,6 s
+```
+
+Horizontal scaling does not seem to influence results in this case. This could be due to the fact that resources are over-provisioned in this case, as it is possible to verify by enabling vertical scaling. With vertical scaling enabled, resources can be scaled down in order to reduce costs, while maintaining the same maximum execution time. In fact, enabling vertical elasticity for CPUs, RAMs and BW, yields to the following results:
+
+```
+Total cost: 11480$
+Max execution time for cloudlet: 94,6 s
+```

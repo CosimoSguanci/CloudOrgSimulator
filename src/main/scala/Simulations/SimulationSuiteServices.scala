@@ -1,7 +1,7 @@
 package Simulations
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{ScalingStrategy, SuiteServicesCloudlet, TypeOfService, VmWithScalingFactory}
+import Utils.{ScalingStrategy, WorkspaceCloudlet, TypeOfService, VmWithScalingFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -28,7 +28,7 @@ class SimulationSuiteServices
 object SimulationSuiteServices:
 
   //val random: ContinuousDistribution = new UniformDistr()
-  //val cloudlets: List[SuiteServicesCloudlet] = new List()
+  //val cloudlets: List[WorkspaceCloudlet] = new List()
 
   val config = ObtainConfigReference("saasSimulation") match {
     case Some(value) => value
@@ -55,7 +55,7 @@ object SimulationSuiteServices:
     }
 
     val vmList: List[Vm] = createVms()
-    val cloudletlist: List[SuiteServicesCloudlet] = createCloudlets()
+    val cloudletlist: List[WorkspaceCloudlet] = createCloudlets()
 
     setupFileRequirementsForCloudlets(cloudletlist);
 
@@ -68,7 +68,7 @@ object SimulationSuiteServices:
 
     // Multiple brokers means multiple customers to be served
     /*val vmList1: List[Vm] = createVms()
-    val cloudletlist1: List[SuiteServicesCloudlet] = createCloudletsTest()
+    val cloudletlist1: List[WorkspaceCloudlet] = createCloudletsTest()
 
     setupFileRequirementsForCloudlets(cloudletlist1);
 
@@ -182,14 +182,14 @@ object SimulationSuiteServices:
     range.map(i => VmWithScalingFactory(scalingStrategyId)).toList
   }
 
-  def createCloudlets(): List[SuiteServicesCloudlet] = {
+  def createCloudlets(): List[WorkspaceCloudlet] = {
     val numOfEmailCloudlets = config.getInt("saasSimulation.cloudlet.numEmailCloudlets")
     val numOfDocsCloudlets = config.getInt("saasSimulation.cloudlet.numDocsCloudlets")
     val numOfStorageCloudlets = config.getInt("saasSimulation.cloudlet.numStorageCloudlets")
 
-    val emailCloudlets: List[SuiteServicesCloudlet] = (1 to numOfEmailCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
-    val docsCloudlets: List[SuiteServicesCloudlet] = (1 to numOfDocsCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.CLOUD_DOCS)).toList
-    val storageCloudlets: List[SuiteServicesCloudlet] = (1 to numOfStorageCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.CLOUD_STORAGE)).toList
+    val emailCloudlets: List[WorkspaceCloudlet] = (1 to numOfEmailCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
+    val docsCloudlets: List[WorkspaceCloudlet] = (1 to numOfDocsCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_DOCS)).toList
+    val storageCloudlets: List[WorkspaceCloudlet] = (1 to numOfStorageCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_STORAGE)).toList
 
     emailCloudlets ::: docsCloudlets ::: storageCloudlets
   }
@@ -202,12 +202,12 @@ object SimulationSuiteServices:
     (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
   }
 
-  def createCloudletsTest(): List[SuiteServicesCloudlet] = {
+  def createCloudletsTest(): List[WorkspaceCloudlet] = {
     val numOfCloudlets = config.getInt("saasSimulation.cloudlet.num")
-    (1 to numOfCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
+    (1 to numOfCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
   }
 
-  def createCloudlets2(): List[SuiteServicesCloudlet] = {
+  def createCloudlets2(): List[WorkspaceCloudlet] = {
     val numOfCloudlets = config.getInt("saasSimulation.cloudlet.num")
     val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))
     val cloudletLength = config.getInt("saasSimulation.cloudlet.length")
@@ -223,7 +223,7 @@ object SimulationSuiteServices:
     }
   }*/
 
-  def setupFileRequirementsForCloudlets(cloudletList: List[SuiteServicesCloudlet]): Unit = {
+  def setupFileRequirementsForCloudlets(cloudletList: List[WorkspaceCloudlet]): Unit = {
     //val numOfStoredFiles = config.getInt("saasSimulation.datacenter.numOfStoredFiles")
     val numOfStoredFiles = config.getInt("saasSimulation.cloudlet.numStorageCloudlets")
     val range = 1 to numOfStoredFiles

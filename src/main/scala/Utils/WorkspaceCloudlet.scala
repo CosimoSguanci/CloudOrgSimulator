@@ -7,11 +7,11 @@ import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelDynamic, Utiliza
 enum TypeOfService:
   case EMAIL, CLOUD_DOCS, CLOUD_STORAGE
 
-class SuiteServicesCloudlet(val typeOfService: TypeOfService)
+class WorkspaceCloudlet(val typeOfService: TypeOfService)
   extends CloudletSimple(
     config.getInt("cloudlet.length"),
     config.getInt("cloudlet.PEs"),
-    new UtilizationModelDynamic(config.getDouble("utilizationRatio"))) { // new UtilizationModelDynamic(config.getDouble("saasSimulation.utilizationRatio"))
+    new UtilizationModelDynamic(config.getDouble("utilizationRatio"))) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
   
   def getTypeOfServiceText(): String = {
     typeOfService match {

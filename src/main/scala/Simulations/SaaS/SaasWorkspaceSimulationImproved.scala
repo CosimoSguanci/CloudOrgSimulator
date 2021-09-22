@@ -2,7 +2,7 @@ package Simulations.SaaS
 
 import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{ScalingStrategy, SuiteServicesCloudlet, TypeOfService, VmWithScalingFactory}
+import Utils.{ScalingStrategy, WorkspaceCloudlet, TypeOfService, VmWithScalingFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -50,18 +50,27 @@ object SaasWorkspaceSimulationImproved:
     }
 
     val vmList: List[Vm] = createVms()
-    val cloudletlist: List[SuiteServicesCloudlet] = createCloudlets()
+    val cloudletlist: List[WorkspaceCloudlet] = createCloudlets()
 
     setupFileRequirementsForCloudlets(cloudletlist);
 
-     val broker0 = new DatacenterBrokerSimple(simulation) // best fit
+    val broker0 = new DatacenterBrokerSimple(simulation) // best fit
 
     broker0.submitVmList(vmList.asJava)
     broker0.submitCloudletList(cloudletlist.asJava)
 
+    //val broker1 = new DatacenterBrokerSimple(simulation)
+
+    //broker0.submitVmList(vmList.splitAt(vmList.length / 2)._1.asJava)
+    //broker1.submitVmList(vmList.splitAt(vmList.length / 2)._2.asJava)
+    //broker0.submitCloudletList(cloudletlist.splitAt(cloudletlist.length / 2)._1.asJava)
+    //broker1.submitCloudletList(cloudletlist.splitAt(cloudletlist.length / 2)._2.asJava)
+
     simulation.start();
 
     val finishedCloudlets = broker0.getCloudletFinishedList()
+
+    //finishedCloudlets.addAll(broker1.getCloudletFinishedList())
 
     val cloudletsTableBuilder: CloudletsTableBuilder = new CloudletsTableBuilder(finishedCloudlets);
 
@@ -72,7 +81,8 @@ object SaasWorkspaceSimulationImproved:
     }).build();
 
 
-    printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    //printCost(vmList, i = 0, j = 0, broker0, broker1, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    printCostOrig(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
   }
 
   def createDatacenters(simulation: CloudSim, datacenters: List[NetworkDatacenter], numOfDatacenters: Int): List[NetworkDatacenter] = {
@@ -92,8 +102,8 @@ object SaasWorkspaceSimulationImproved:
     val hostList: List[Host] = range.map(i => createHost()).toList
 
 
-    val random: ContinuousDistribution = new UniformDistr();
-    val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, new VmAllocationPolicyFirstFit()) // new VmAllocationPolicyRandom(random)
+    //val random: ContinuousDistribution = new UniformDistr();
+    val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, new VmAllocationPolicyRoundRobin()) // new VmAllocationPolicyRandom(random)
 
     datacenter
       .getCharacteristics()
@@ -102,7 +112,6 @@ object SaasWorkspaceSimulationImproved:
       .setCostPerStorage(config.getDouble("datacenter.costPerStorage"))
       .setCostPerBw(config.getDouble("datacenter.costPerBw"));
 
-    //datacenter.setSchedulingInterval(100)
     return datacenter
   }
 
@@ -161,14 +170,14 @@ object SaasWorkspaceSimulationImproved:
     range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(new CloudletSchedulerSpaceShared())).toList
   }
 
-  def createCloudlets(): List[SuiteServicesCloudlet] = {
+  def createCloudlets(): List[WorkspaceCloudlet] = {
     val numOfEmailCloudlets = config.getInt("cloudlet.numEmailCloudlets")
     val numOfDocsCloudlets = config.getInt("cloudlet.numDocsCloudlets")
     val numOfStorageCloudlets = config.getInt("cloudlet.numStorageCloudlets")
 
-    val emailCloudlets: List[SuiteServicesCloudlet] = (1 to numOfEmailCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
-    val docsCloudlets: List[SuiteServicesCloudlet] = (1 to numOfDocsCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.CLOUD_DOCS)).toList
-    val storageCloudlets: List[SuiteServicesCloudlet] = (1 to numOfStorageCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.CLOUD_STORAGE)).toList
+    val emailCloudlets: List[WorkspaceCloudlet] = (1 to numOfEmailCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
+    val docsCloudlets: List[WorkspaceCloudlet] = (1 to numOfDocsCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_DOCS)).toList
+    val storageCloudlets: List[WorkspaceCloudlet] = (1 to numOfStorageCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_STORAGE)).toList
 
     emailCloudlets ::: docsCloudlets ::: storageCloudlets
   }
@@ -181,12 +190,12 @@ object SaasWorkspaceSimulationImproved:
       (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
     }
 
-    def createCloudletsTest(): List[SuiteServicesCloudlet] = {
+    def createCloudletsTest(): List[WorkspaceCloudlet] = {
       val numOfCloudlets = config.getInt("cloudlet.num")
-      (1 to numOfCloudlets).map(i => new SuiteServicesCloudlet(TypeOfService.EMAIL)).toList
+      (1 to numOfCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
     }
 
-    def createCloudlets2(): List[SuiteServicesCloudlet] = {
+    def createCloudlets2(): List[WorkspaceCloudlet] = {
       val numOfCloudlets = config.getInt("cloudlet.num")
       val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
       val cloudletLength = config.getInt("cloudlet.length")
@@ -202,7 +211,7 @@ object SaasWorkspaceSimulationImproved:
       }
     }*/
 
-  def setupFileRequirementsForCloudlets(cloudletList: List[SuiteServicesCloudlet]): Unit = {
+  def setupFileRequirementsForCloudlets(cloudletList: List[WorkspaceCloudlet]): Unit = {
     //val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
     val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets")
     val range = 1 to numOfStoredFiles
@@ -215,6 +224,48 @@ object SaasWorkspaceSimulationImproved:
   }
 
   def printCost(
+                  vmlist: List[Vm],
+                 i: Int,
+                  j: Int,
+                 broker0: DatacenterBrokerSimple,
+                 broker1: DatacenterBrokerSimple,
+                 totalCost: Double,
+                 processingTotalCost: Double,
+                 memoryTotalCost: Double,
+                 storageTotalCost: Double,
+                 bwTotalCost: Double,
+                 totalNonIdleVms: Int): Unit = {
+
+    val broker = if(i < (vmlist.length / 2)) broker0 else broker1
+
+    if (j == (vmlist.length / 2)) {
+      // finished iterating over vms, we print the final report
+      println("Total cost ($) for " + totalNonIdleVms +
+        " created VMs: \n" +
+        "processing cost: " + processingTotalCost + "$ \n" +
+        "memory cost: " + memoryTotalCost + "$ \n" +
+        "storage cost: " + storageTotalCost + "$ \n" +
+        "bandwidth cost: " + bwTotalCost + "$ \n" +
+        "total cost: " + totalCost + "$")
+
+      return;
+    }
+
+    val vm: Vm = if(broker.equals(broker0)) broker.getVmCreatedList().get(i) else broker1.getVmCreatedList().get(j)
+    val vmCost: VmCost = new VmCost(vm)
+    //println(vmCost)
+
+    val newTotalCost: Double = totalCost + vmCost.getTotalCost()
+    val newProcessingTotalCost: Double = processingTotalCost + vmCost.getProcessingCost()
+    val newMemoryTotalCost: Double = memoryTotalCost + vmCost.getMemoryCost()
+    val newStorageTotalCost: Double = storageTotalCost + vmCost.getStorageCost()
+    val newBwTotalCost: Double = bwTotalCost + vmCost.getBwCost()
+    val newTotalNonIdleVms: Int = if (vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
+
+    printCost(vmlist, if(broker.equals(broker0)) i + 1 else i, if(broker.equals(broker1)) j + 1 else j, broker0, broker1, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
+  }
+
+  def printCostOrig(
                  i: Int,
                  broker: DatacenterBrokerSimple,
                  totalCost: Double,
@@ -248,6 +299,6 @@ object SaasWorkspaceSimulationImproved:
     val newBwTotalCost: Double = bwTotalCost + vmCost.getBwCost()
     val newTotalNonIdleVms: Int = if (vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
 
-    printCost(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
+    printCostOrig(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
   }
 

@@ -1,9 +1,9 @@
-package Simulations.SaaS
+package Simulations.IaaS_PaaS_FaaS
 
 import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{ScalingStrategy, TypeOfService, VmWithScalingFactory, WorkspaceCloudlet}
-import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicySimple}
+import Utils.{DeploymentModel, IaasPaasFaasCloudlet, ScalingStrategy, TypeOfService, VmWithScalingFactory}
+import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
@@ -20,22 +20,34 @@ import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
 import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerCompletelyFair, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
+import java.util.Comparator
 import scala.::
 import scala.jdk.CollectionConverters.*
+import scala.language.postfixOps
 
-class SaasWorkspaceSimulationBasic
+class IaasPaasFaasSimulationBasic
 
-object SaasWorkspaceSimulationBasic:
+object IaasPaasFaasSimulationBasic:
 
-  val CONFIG = "saasSimulationWorkspaceBasic";
+  val CONFIG = "iaasPaasFaasSimulationBasic";
 
   val config: Config = ConfigFactory.load(s"$CONFIG.conf")
-  val logger = CreateLogger(classOf[SaasWorkspaceSimulationBasic])
+  val logger = CreateLogger(classOf[IaasPaasFaasSimulationBasic])
+
+  val vmList: List[Vm] = createVms()
+  val cloudletList: List[IaasPaasFaasCloudlet] = createCloudlets()
+
+  val faasVmList: List[Vm] = createFaasVms()
+  val faasCloudletList: List[IaasPaasFaasCloudlet] = createFaasCloudlets()
+
+
+  val simulation = new CloudSim()
+  val broker0 = new DatacenterBrokerSimple(simulation)
+  val brokerFaas = new DatacenterBrokerSimple(simulation)
 
   def Start() = {
-    val simulation = new CloudSim()
 
     val numOfDatacenters = config.getInt("datacenter.num")
 
@@ -49,30 +61,51 @@ object SaasWorkspaceSimulationBasic:
       }
     }
 
-    val vmList: List[Vm] = createVms()
-    val cloudletlist: List[WorkspaceCloudlet] = createCloudlets()
 
-    setupFileRequirementsForCloudlets(cloudletlist);
+    setupFileRequirementsForCloudlets(cloudletList);
 
-    val broker0 = new DatacenterBrokerSimple(simulation) // best fit
+    simulation.addOnClockTickListener(periodicEventHandler);
+
+    broker0.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
 
     broker0.submitVmList(vmList.asJava)
-    broker0.submitCloudletList(cloudletlist.asJava)
+    broker0.submitCloudletList(cloudletList.asJava)
 
+    brokerFaas.submitVmList(faasVmList.asJava)
+    brokerFaas.submitCloudletList(faasCloudletList.asJava)
+
+    
     simulation.start();
 
     val finishedCloudlets = broker0.getCloudletFinishedList()
 
+    finishedCloudlets.addAll(brokerFaas.getCloudletFinishedList())
+
     val cloudletsTableBuilder: CloudletsTableBuilder = new CloudletsTableBuilder(finishedCloudlets);
 
-    cloudletsTableBuilder.addColumn(1, new TextTableColumn("CloudletType", ""), new java.util.function.Function[Cloudlet, Object] {
+/*    cloudletsTableBuilder.addColumn(1, new TextTableColumn("CloudletType", ""), new java.util.function.Function[Cloudlet, Object] {
       override def apply(c: Cloudlet): Object = {
-        cloudletlist.filter(p => p.equals(c)).map(a => a.getTypeOfServiceText())(0)
+        //cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+        if(cloudletList.filter(p => p.equals(c)).nonEmpty) {
+          cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+        }
+        else {
+          faasCloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+        }
       }
-    }).build();
+    }).build();*/
+
+    cloudletsTableBuilder.build()
 
 
     printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    println()
+    printCost(i = 0, brokerFaas, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    println()
+    println("Total number of finished cloudlets: " + (finishedCloudlets.size()))
+
+    val c: Cloudlet = (finishedCloudlets.stream().max(Comparator.comparing((c: Cloudlet) => c.getActualCpuTime)).get())
+    println("Max exec time: " + (c.getActualCpuTime))
   }
 
   def createDatacenters(simulation: CloudSim, datacenters: List[NetworkDatacenter], numOfDatacenters: Int): List[NetworkDatacenter] = {
@@ -92,7 +125,7 @@ object SaasWorkspaceSimulationBasic:
     val hostList: List[Host] = range.map(i => createHost()).toList
 
 
-    //val random: ContinuousDistribution = new UniformDistr();
+    val random: ContinuousDistribution = new UniformDistr();
     val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, new VmAllocationPolicySimple()) // new VmAllocationPolicyRandom(random)
 
     datacenter
@@ -102,7 +135,7 @@ object SaasWorkspaceSimulationBasic:
       .setCostPerStorage(config.getDouble("datacenter.costPerStorage"))
       .setCostPerBw(config.getDouble("datacenter.costPerBw"));
 
-    //datacenter.setSchedulingInterval(100)
+    datacenter.setSchedulingInterval(config.getInt("datacenter.schedulingInterval"))
     return datacenter
   }
 
@@ -139,8 +172,7 @@ object SaasWorkspaceSimulationBasic:
   }
 
   def addFilesToSan(san: SanStorage): Unit = {
-    //val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
-    val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets") // for every cloudlet relative to the cloud storage service, we add a file for the simulation
+    val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
     val sizeSmall = config.getInt("datacenter.sanFileSizeInMB_small")
     val sizeMedium = config.getInt("datacenter.sanFileSizeInMB_medium")
     val sizeBig = config.getInt("datacenter.sanFileSizeInMB_big")
@@ -156,62 +188,69 @@ object SaasWorkspaceSimulationBasic:
 
   def createVms(): List[Vm] = {
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
-    val numOfVMs = config.getInt("vm.num")
-    val range = 1 to numOfVMs
-    range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(new CloudletSchedulerTimeShared())).toList
+    val numOfStandardVMs = config.getInt("vm.standardVms.num")
+    //val numOfFaasVMs = config.getInt("vm.faasVms.num") // specialized lightweight VMs to run serveless computations
+
+    (1 to numOfStandardVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.PEs"))).toList
+    //val faasVms = (1 to numOfFaasVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.faasVms.PEs")).setCloudletScheduler(new CloudletSchedulerSpaceShared())).toList
+
+    //standardVms ::: faasVms
   }
 
-  def createCloudlets(): List[WorkspaceCloudlet] = {
-    val numOfEmailCloudlets = config.getInt("cloudlet.numEmailCloudlets")
-    val numOfDocsCloudlets = config.getInt("cloudlet.numDocsCloudlets")
-    val numOfStorageCloudlets = config.getInt("cloudlet.numStorageCloudlets")
-
-    val emailCloudlets: List[WorkspaceCloudlet] = (1 to numOfEmailCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
-    val docsCloudlets: List[WorkspaceCloudlet] = (1 to numOfDocsCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_DOCS)).toList
-    val storageCloudlets: List[WorkspaceCloudlet] = (1 to numOfStorageCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_STORAGE)).toList
-
-    emailCloudlets ::: docsCloudlets ::: storageCloudlets
+  def createFaasVms(): List[Vm] = {
+    val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
+    val numOfFaasVMs = config.getInt("vm.faasVms.num") // specialized lightweight VMs to run serveless computations
+    (1 to numOfFaasVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.faasVms.PEs"))).toList
   }
 
-  /*  def createCloudlets(): List[Cloudlet] = {
-      val numOfCloudlets = config.getInt("cloudlet.num")
-      val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
-      val cloudletLength = config.getInt("cloudlet.length")
-      val cloudletPEs = config.getInt("cloudlet.PEs")
-      (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
+  def createCloudlets(): List[IaasPaasFaasCloudlet] = {
+    val numOfIaasCloudlets = config.getInt("cloudlet.iaas.num")
+    val numOfPaasCloudlets = config.getInt("cloudlet.paas.num")
+    //val numOfFaasCloudlets = config.getInt("cloudlet.faas.num")
+
+    val iaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfIaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.IAAS)).toList
+    val paasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfPaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.PAAS)).toList
+    //val faasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfFaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
+
+    iaasCloudlets.foreach(c => c.setupComputingResources())
+    paasCloudlets.foreach(c => c.setupComputingResources())
+    //faasCloudlets.foreach(c => c.setupComputingResources())
+
+    iaasCloudlets ::: paasCloudlets
+      //::: faasCloudlets
+  }
+
+  def createFaasCloudlets(): List[IaasPaasFaasCloudlet] = {
+    val numOfFaasCloudlets = config.getInt("cloudlet.faas.num")
+    val faasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfFaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
+    faasCloudlets.foreach(c => c.setupComputingResources())
+    faasCloudlets
+  }
+
+  def periodicEventHandler(eventInfo: EventInfo) = {
+    val time = eventInfo.getTime()
+    if(time <= config.getInt("newCloudletsDuration")) {
+      val howManyNewCloudlets = config.getInt("howManyNewCloudlets")
+      val newIaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.IAAS)).toList
+      val newPaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.PAAS)).toList
+      val newFaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
+
+      val newCloudlets = newIaasCloudlets ::: newPaasCloudlets //::: newFaasCloudlets
+      newCloudlets.foreach(c => c.setupComputingResources());
+      newFaasCloudlets.foreach(c => c.setupComputingResources())
+
+
+
+      broker0.submitCloudletList(newCloudlets.asJava);
+      brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
     }
+  }
 
-    def createCloudletsTest(): List[WorkspaceCloudlet] = {
-      val numOfCloudlets = config.getInt("cloudlet.num")
-      (1 to numOfCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
-    }
-
-    def createCloudlets2(): List[WorkspaceCloudlet] = {
-      val numOfCloudlets = config.getInt("cloudlet.num")
-      val utilizationModel: UtilizationModelDynamic = new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
-      val cloudletLength = config.getInt("cloudlet.length")
-      val cloudletPEs = config.getInt("cloudlet.PEs")
-      (1 to numOfCloudlets).map(i => new CloudletSimple(cloudletLength, cloudletPEs, utilizationModel)).toList
-    }*/
-
-  /*  def createRandomCloudlets(evt: EventInfo): Unit = { // dynamic arrival of new tasks to be processed
-      val probabilityOfNewArrival = config.getDouble("cloudlet.probabilityOfNewArrival");
-      if(random.sample() <= probabilityOfNewArrival) {
-        //log
-
-      }
-    }*/
-
-  def setupFileRequirementsForCloudlets(cloudletList: List[WorkspaceCloudlet]): Unit = {
-    //val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
-    val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets")
+  def setupFileRequirementsForCloudlets(cloudletList: List[IaasPaasFaasCloudlet]): Unit = {
+    val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
     val range = 1 to numOfStoredFiles
 
-    cloudletList.filter(c => c.typeOfService == TypeOfService.CLOUD_STORAGE).lazyZip(range).map {
-      (cloudlet, i) => {
-        cloudlet.addRequiredFile(s"file$i.txt");
-      }
-    }
+    range.foreach(i => cloudletList(i).addRequiredFile(s"file$i.txt"));
   }
 
   def printCost(
