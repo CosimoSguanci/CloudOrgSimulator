@@ -27,14 +27,14 @@ import scala.::
 import scala.jdk.CollectionConverters.*
 import scala.language.postfixOps
 
-class IaasPaasFaasSimulationBasic
+class IaasPaasFaasCloudletRandomArrivalSimulation
 
-object IaasPaasFaasSimulationBasic:
+object IaasPaasFaasCloudletRandomArrivalSimulation:
 
   val CONFIG = "iaasPaasFaasSimulationBasic";
 
   val config: Config = ConfigFactory.load(s"$CONFIG.conf")
-  val logger = CreateLogger(classOf[IaasPaasFaasSimulationBasic])
+  val logger = CreateLogger(classOf[IaasPaasFaasCloudletRandomArrivalSimulation])
 
   val vmList: List[Vm] = createVms()
   val cloudletList: List[IaasPaasFaasCloudlet] = createCloudlets()
@@ -46,6 +46,8 @@ object IaasPaasFaasSimulationBasic:
   val simulation = new CloudSim()
   val broker0 = new DatacenterBrokerSimple(simulation)
   val brokerFaas = new DatacenterBrokerSimple(simulation)
+
+  val random: ContinuousDistribution = new UniformDistr()
 
   def Start() = {
 
@@ -64,6 +66,7 @@ object IaasPaasFaasSimulationBasic:
 
     setupFileRequirementsForCloudlets(cloudletList);
 
+    simulation.terminateAt(30)
     simulation.addOnClockTickListener(periodicEventHandler);
 
     broker0.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
@@ -84,17 +87,17 @@ object IaasPaasFaasSimulationBasic:
 
     val cloudletsTableBuilder: CloudletsTableBuilder = new CloudletsTableBuilder(finishedCloudlets);
 
-/*    cloudletsTableBuilder.addColumn(1, new TextTableColumn("CloudletType", ""), new java.util.function.Function[Cloudlet, Object] {
-      override def apply(c: Cloudlet): Object = {
-        //cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
-        if(cloudletList.filter(p => p.equals(c)).nonEmpty) {
-          cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
-        }
-        else {
-          faasCloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
-        }
-      }
-    }).build();*/
+    /*    cloudletsTableBuilder.addColumn(1, new TextTableColumn("CloudletType", ""), new java.util.function.Function[Cloudlet, Object] {
+          override def apply(c: Cloudlet): Object = {
+            //cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+            if(cloudletList.filter(p => p.equals(c)).nonEmpty) {
+              cloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+            }
+            else {
+              faasCloudletList.filter(p => p.equals(c)).map(a => a.getDeploymentModelText())(0)
+            }
+          }
+        }).build();*/
 
     //cloudletsTableBuilder.build()
 
@@ -218,7 +221,7 @@ object IaasPaasFaasSimulationBasic:
     //faasCloudlets.foreach(c => c.setupComputingResources())
 
     iaasCloudlets ::: paasCloudlets
-      //::: faasCloudlets
+    //::: faasCloudlets
   }
 
   def createFaasCloudlets(): List[IaasPaasFaasCloudlet] = {
@@ -230,8 +233,8 @@ object IaasPaasFaasSimulationBasic:
 
   def periodicEventHandler(eventInfo: EventInfo) = {
     val time = eventInfo.getTime()
-    if(time <= config.getInt("newCloudletsDuration")) {
-      val howManyNewCloudlets = config.getInt("howManyNewCloudlets")
+    if(random.sample() < 0.5) {
+      val howManyNewCloudlets = scala.util.Random.nextInt(config.getInt("howManyNewCloudlets"))
       val newIaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.IAAS)).toList
       val newPaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.PAAS)).toList
       val newFaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
