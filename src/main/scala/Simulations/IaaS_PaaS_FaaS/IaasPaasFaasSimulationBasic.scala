@@ -5,12 +5,14 @@ import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.{DeploymentModel, IaasPaasFaasCloudlet, ScalingStrategy, TypeOfService, VmWithScalingFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
+import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, NetworkCloudlet}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.datacenters.{Datacenter, DatacenterSimple}
 import org.cloudbus.cloudsim.distributions.{ContinuousDistribution, UniformDistr}
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
+import org.cloudbus.cloudsim.network.topologies.BriteNetworkTopology
 import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
 import org.cloudbus.cloudsim.resources.*
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerSpaceShared, VmSchedulerTimeShared}
@@ -48,6 +50,8 @@ object IaasPaasFaasSimulationBasic:
   val brokerFaas = new DatacenterBrokerSimple(simulation)
 
   def Start() = {
+
+    CloudletExecutionTask
 
     val numOfDatacenters = config.getInt("datacenter.num")
 

@@ -63,7 +63,7 @@ object VmWithScalingFactory {
   }
 
   def createVm(vmPEs: Int = config.getInt("vm.PEs")): Vm = {
-    val hostMips = config.getInt("host.mipsCapacityPE")
+    val hostMips = config.getInt("host.mipsCapacityPE") // NO!!!!!
     //val vmPEs = if(deploymentModel == DeploymentModel.FAAS) config.getInt("vm.faasVms.PEs") else config.getInt("vm.PEs")
     val ramInMBs = config.getInt("vm.RAMInMBs")
     val storageInMBs = config.getLong("vm.StorageInMBs")
