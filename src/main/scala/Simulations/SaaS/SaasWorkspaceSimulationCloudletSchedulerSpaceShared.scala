@@ -1,9 +1,9 @@
 package Simulations.SaaS
 
-import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{CloudletSchedulerType, CommonMethods, ScalingStrategy, TypeOfService, VmAllocationType, VmSchedulerType, VmWithScalingFactory, WorkspaceCloudlet}
-import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
+import Utils.*
+import com.typesafe.config.{Config, ConfigFactory}
+import org.cloudbus.cloudsim.allocationpolicies.*
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
@@ -11,20 +11,25 @@ import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.datacenters.{Datacenter, DatacenterSimple}
 import org.cloudbus.cloudsim.distributions.{ContinuousDistribution, UniformDistr}
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
-import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
+import org.cloudbus.cloudsim.provisioners.{ResourceProvisioner, ResourceProvisionerSimple}
 import org.cloudbus.cloudsim.resources.*
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerSpaceShared, VmSchedulerTimeShared}
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
 import org.cloudbus.cloudsim.vms.{Vm, VmCost, VmSimple}
 import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
-import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
 import scala.::
 import scala.jdk.CollectionConverters.*
 
+/**
+ * The second implemented SaaS simulation, it uses a different CloudletScheduler in order to achieve much better performance and lower costs.
+ * In particular, here CloudletSchedulerSpaceShared is used instead of CloudletSchedulerTimeShared. This allows the use of waiting lists to handle
+ * the allocation of VMs for cloudlets, instead of the previous policy that was assigning time slices and alternating cloudlets to be "fair", thus
+ * leading to unwanted delays in computations.
+ */
 class SaasWorkspaceSimulationCloudletSchedulerSpaceShared
 
 object SaasWorkspaceSimulationCloudletSchedulerSpaceShared:

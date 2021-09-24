@@ -1,8 +1,8 @@
 package Simulations.SaaS
 
-import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{CloudletSchedulerType, CommonMethods, ScalingStrategy, TypeOfService, VmAllocationType, VmSchedulerType, VmWithScalingFactory, WorkspaceCloudlet}
+import Utils.*
+import com.typesafe.config.{Config, ConfigFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -11,22 +11,26 @@ import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.datacenters.{Datacenter, DatacenterSimple}
 import org.cloudbus.cloudsim.distributions.{ContinuousDistribution, UniformDistr}
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
-import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
+import org.cloudbus.cloudsim.provisioners.{ResourceProvisioner, ResourceProvisionerSimple}
 import org.cloudbus.cloudsim.resources.*
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerCompletelyFair, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerSpaceShared, VmSchedulerTimeShared}
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
 import org.cloudbus.cloudsim.vms.{Vm, VmCost, VmSimple}
 import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
-import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerCompletelyFair, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
 import scala.::
 import scala.jdk.CollectionConverters.*
 
 // TODO: Power Usage (vmallocationroundrobin?), combination of all the simulations in oeìne datacenter, lazyZip indexes
 
+/**
+ * The third implemented SaaS simulation, it uses a different VM Scheduling policy to assign VMs to Hosts. Using VmSchedulerTimeShared
+ * allows to handle the cases where we don't have enough PEs to satisfy all the requests but we have enough MIPS: PEs can be shared
+ * by multiple VMs.
+ */
 class SaasWorkspaceSimulationVmSchedulerTimeShared
 
 object SaasWorkspaceSimulationVmSchedulerTimeShared:
@@ -98,6 +102,11 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
     CommonMethods.printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
   }
 
+  /**
+   * Creates VMs that deviate from the "standard" policy because they have a MIPS parameter that is different from that of the Host PE.
+   * 
+   * @return The list of Virtual Machines of all the datacenters
+   */
   def createVms(): List[Vm] = {
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfVMs = config.getInt("vm.num")
