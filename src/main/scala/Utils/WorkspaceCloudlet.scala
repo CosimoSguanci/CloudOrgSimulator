@@ -9,10 +9,9 @@ enum TypeOfService:
 
 class WorkspaceCloudlet(val typeOfService: TypeOfService)
   extends CloudletSimple(
-    config.getInt("cloudlet.length"),
-    config.getInt("cloudlet.PEs"),
-    new UtilizationModelDynamic(config.getDouble("utilizationRatio"))) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
-  
+    config.getInt("cloudlet.defaultLength"),
+    config.getInt("cloudlet.defaultPEs")) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+
   def getTypeOfServiceText(): String = {
     typeOfService match {
       case TypeOfService.EMAIL => "Email"

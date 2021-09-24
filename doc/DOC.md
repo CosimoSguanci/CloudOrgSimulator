@@ -90,21 +90,21 @@ Total cost: 2.95E8$
 
 The first result that has been found is that, with the basic configuration, the execution time of tasks tends to explode, and consequently are also processing cost. This is mainly due to the `CloudletSchedulerTimeShared`, as will be clear in the next simulation. Obviously, these results are not feasible in a real world scenario, so it is necessary to change some policies in the model.
 
-### SaasWorkspaceSimulationImproved
+### SaasWorkspaceSimulationCloudletSchedulerSpaceShared
 
 #### Results
 By changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice a substantial improvement:
 
 ```
 Time to execute all cloudlets: 40 s
-Total cost: 2046.62$
+Total cost: 5733$
 ```
 
 This is due to the fact that in the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicate a small slice time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
 
 ### SaasWorkspaceSimulationVmSchedulerTimeShared
 
-It's interesting to explore the possibilities that are offered by other policies regarding VM scheduling. For instance, in this simulation we are changing it from `VmSchedulerSpaceShared` to `VmSchedulerTimeShared`. Doing this makes it feasible to handle situations in which we have an insufficient total number of Host PEs for all the VMs. As a matter of fact, this VM scheduling policy allows the sharing of the same PEs by multiple VMs.
+It's interesting to explore the possibilities that are offered by other policies regarding VM scheduling. For instance, in this simulation we are changing it from `VmSchedulerSpaceShared` to `VmSchedulerTimeShared` (in conjuction with `CloudletSchedulerTimeShared`. Doing this makes it feasible to handle situations in which we have an insufficient total number of Host PEs for all the VMs. As a matter of fact, this VM scheduling policy allows the sharing of the same PEs by multiple VMs.
 
 The configuration is changed as follows:
 - Num of datacenters = 2

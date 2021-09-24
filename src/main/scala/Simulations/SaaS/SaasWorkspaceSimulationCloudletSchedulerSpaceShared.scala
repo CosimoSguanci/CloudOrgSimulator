@@ -3,7 +3,7 @@ package Simulations.SaaS
 import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.{CloudletSchedulerType, CommonMethods, ScalingStrategy, TypeOfService, VmAllocationType, VmSchedulerType, VmWithScalingFactory, WorkspaceCloudlet}
-import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicySimple}
+import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyFirstFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.core.CloudSim
@@ -20,18 +20,16 @@ import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
 import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerCompletelyFair, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
 import scala.::
 import scala.jdk.CollectionConverters.*
 
-// TODO: Power Usage (vmallocationroundrobin?), combination of all the simulations in oeìne datacenter, lazyZip indexes
+class SaasWorkspaceSimulationCloudletSchedulerSpaceShared
 
-class SaasWorkspaceSimulationVmSchedulerTimeShared
+object SaasWorkspaceSimulationCloudletSchedulerSpaceShared:
 
-object SaasWorkspaceSimulationVmSchedulerTimeShared:
-
-  val CONFIG = "saasSimulationWorkspaceVmSchedulerTimeShared";
+  val CONFIG = "saasSimulationWorkspaceBasic";
 
   val config: Config = ConfigFactory.load(s"$CONFIG.conf")
   val logger = CreateLogger(classOf[SaasWorkspaceSimulationBasic])
@@ -42,7 +40,7 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
     logger.info("Simulation instantiated")
 
     val numOfDatacenters = config.getInt("datacenter.num")
-    val datacenters: List[Datacenter] = CommonMethods.createDatacenters(config, simulation, List.empty, numOfDatacenters, VmAllocationType.VM_ALLOCATION_SIMPLE, VmSchedulerType.VM_SCHEDULER_TIME_SHARED)
+    val datacenters: List[Datacenter] = CommonMethods.createDatacenters(config, simulation, List.empty, numOfDatacenters, VmAllocationType.VM_ALLOCATION_SIMPLE, VmSchedulerType.VM_SCHEDULER_SPACE_SHARED)
 
     logger.info(s"$numOfDatacenters Datacenters created successfully")
 
@@ -62,7 +60,7 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
 
     logger.info("Datacenters Storage created and assigned to datacenters")
 
-    val vmList: List[Vm] = createVms()
+    val vmList: List[Vm] = CommonMethods.createVmsSaaS(config, CloudletSchedulerType.CLOUDLET_SCHEDULER_SPACE_SHARED)
 
     logger.info(s"VMs creation completed")
 
@@ -98,9 +96,3 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
     CommonMethods.printCost(i = 0, broker0, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
   }
 
-  def createVms(): List[Vm] = {
-    val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
-    val numOfVMs = config.getInt("vm.num")
-    val range = 1 to numOfVMs
-    range.map(i => VmWithScalingFactory(scalingStrategyId, vmPEs = config.getInt("vm.PEs"), vmMips = config.getInt("vm.vmMips")).setCloudletScheduler(new CloudletSchedulerTimeShared())).toList
-  }

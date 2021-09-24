@@ -10,6 +10,7 @@ import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
 import org.cloudbus.cloudsim.resources.*
 import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerAbstract, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerAbstract, VmSchedulerSpaceShared, VmSchedulerTimeShared}
+import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
 import org.cloudbus.cloudsim.vms.{Vm, VmCost}
 
 import scala.jdk.CollectionConverters.*
@@ -129,7 +130,22 @@ object CommonMethods {
     val emailCloudlets: List[WorkspaceCloudlet] = (1 to numOfEmailCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
     val docsCloudlets: List[WorkspaceCloudlet] = (1 to numOfDocsCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_DOCS)).toList
     val storageCloudlets: List[WorkspaceCloudlet] = (1 to numOfStorageCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_STORAGE)).toList
+      
+    emailCloudlets.foreach(c => 
+      c.setNumberOfPes(config.getInt("cloudlet.PEs"))
+      .setLength(config.getInt("cloudlet.length"))
+      .setUtilizationModel(new UtilizationModelDynamic(config.getDouble("utilizationRatio"))))
 
+    docsCloudlets.foreach(c =>
+      c.setNumberOfPes(config.getInt("cloudlet.PEs"))
+        .setLength(config.getInt("cloudlet.length"))
+        .setUtilizationModel(new UtilizationModelDynamic(config.getDouble("utilizationRatio"))))
+
+    storageCloudlets.foreach(c =>
+      c.setNumberOfPes(config.getInt("cloudlet.PEs"))
+        .setLength(config.getInt("cloudlet.length"))
+        .setUtilizationModel(new UtilizationModelDynamic(config.getDouble("utilizationRatio"))))
+    
     emailCloudlets ::: docsCloudlets ::: storageCloudlets
   }
 
