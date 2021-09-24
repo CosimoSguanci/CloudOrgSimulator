@@ -193,3 +193,22 @@ Total number of finished cloudlets: 32780
 ```
 
 The results show higher cost with respect to the simulation with `UtilizationModelStochastic`. This is probably due to the fact that performing an efficient vertical scaling is more difficult in this setting, therefore if before the resources were downscaled at the start of the simulation and then substantially left unchanged, now the resources must be continuously added and removed from the system. This leads to over-provisioning of resources and overhead for allocation/deallocating them, that is reflected by the higher cloudlet maximum execution time.
+
+## IaasPaasFaasCloudletRandomArrivalSimulation
+In this case the main result that we're investigating is how many cloudlets can be completed in a fixed amount of time (on average) when the arrival of new cloudlet is modelled as a random process. 
+That is, every time the simulation clock advances, with probability configurable in the .conf file, we're creating new cloudlets and submitting them to the broker. The objective here is to evaluate how different autoscaling techniques behave in this scenario, starting from a situation in which few resources are provisioned.
+
+### Main parameters
+- Duration of the simulation = 100 s
+- Probability of new cloudlets to be added = 0.5
+- Number of new cloudlets created = 12 (3 IaaS, 3 PaaS, 3 FaaS)
+
+### Results
+5 simulations for each scaling strategy have been performed, we report here the average results.
+
+#### No autoscaling
+```
+Average cost: 29278$
+Average max execution time for cloudlet: 89 s
+Average number of finished cloudlets: 
+```
