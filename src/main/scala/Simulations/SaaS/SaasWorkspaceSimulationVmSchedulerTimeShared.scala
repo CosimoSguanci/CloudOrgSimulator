@@ -54,7 +54,7 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
      * Call to the method that creates the datacenter storage together with SANs and associated files,
      * that will be then required by cloudlets that represent cloud storage requests by customers
      */
-    val datacenterStorageList: List[DatacenterStorage] = CommonMethods.createDatacenterStorage(config, numOfDatacenters);
+    val datacenterStorageList: List[DatacenterStorage] = CommonMethods.createDatacenterStorage(config, numOfDatacenters, config.getInt("cloudlet.numStorageCloudlets"));
 
     // We assign datacenter storage to the corresponding datacenter and vice versa
     datacenters.lazyZip(datacenterStorageList).foreach {

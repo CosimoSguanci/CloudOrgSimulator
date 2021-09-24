@@ -99,7 +99,7 @@ object VmWithScalingFactory {
 
     if (cpuVerticalScalingEnabled) {
       val cpuVerticalScaling: VerticalVmScalingSimple = new VerticalVmScalingSimple(classOf[Processor], config.getDouble("vm.autoscaling.cpuVerticalScaling.scalingFactor"))
-      //cpuVerticalScaling.setResourceScaling(new ResourceScalingGradual()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
+      //cpuVerticalScaling.setResourceScaling(new ResourceScalingInstantaneous()) // Here we are not using an instantaneous resource scaling technique since we can tolerate some loss in SLA to avoid unneeded VM scaling
       cpuVerticalScaling.setResourceScaling((vs) => 2 * vs.getScalingFactor * vs.getAllocatedResource)
 
       val lowerThresholdFunction: java.util.function.Function[Vm, java.lang.Double] = new java.util.function.Function[Vm, java.lang.Double] {

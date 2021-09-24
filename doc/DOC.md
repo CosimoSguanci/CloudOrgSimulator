@@ -168,18 +168,20 @@ The other policies employed are the following:
 Without any scaling policy, the results are the following:
 
 ```
-Total cost: 247350$
-Max execution time for cloudlet: 94,6 s
+Total cost: 148291.86$
+Max execution time for cloudlet: 86.58 s
+Total number of finished cloudlets: 27296
 ```
 
-Horizontal scaling does not seem to influence results in this case. This could be due to the fact that resources are over-provisioned in this case, as it is possible to verify by enabling vertical scaling. With vertical scaling enabled, resources can be scaled down in order to reduce costs, while maintaining the same maximum execution time. In fact, enabling vertical elasticity for CPUs, RAMs and BW, yields to the following results:
+What was observed is that enabling vertical scaling leads to lower costs in this case. This could be due to the fact that resources are over-provisioned in this case, as is possible to verify by checking that multiple times during the simulation the `isVmUnderloaded` function returns `true` and the `VerticalVmScaling` requests a downscaling. With vertical scaling enabled, resources can be scaled down in order to reduce costs, only slightly worsening the maximum latency time. In fact, enabling vertical elasticity for CPUs, RAMs and BW, yields to the following results:
 
 ```
-Total cost: 11480$
-Max execution time for cloudlet: 94,6 s
+Total cost: 11700.47$
+Max execution time for cloudlet: 87.36 s
+Total number of finished cloudlets: 32780
 ```
 
-Changing the VM allocation policy to `VmAllocationPolicyBestFit` slightly reduces the costs, but, because of its computational complexity (O(N) where N is the number of hosts), it may not be suitable for a large scale scenario, and a tradeoff must be found.
+Changing the VM allocation policy to `VmAllocationPolicyBestFit` slightly reduces the costs but also the total number of finished cloudlets is lower. For these reasons, and also considering its computational complexity (O(N) where N is the number of hosts), it may not be suitable for a large scale scenario.
 
 To explore more realistic scenario, it's possible to randomize the utilization of resources, by using  `UtilizationModelStochastic`. The difference in terms of cost with previous is interesting:
 
