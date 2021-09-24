@@ -104,7 +104,7 @@ This is due to the fact that in the time-shared scheduler we are trying to be "f
 
 ### SaasWorkspaceSimulationVmSchedulerTimeShared
 
-It's interesting to explore the possibilities that are offered by other policies regarding VM scheduling. For instance, in this simulation we are changing it from `VmSchedulerSpaceShared` to `VmSchedulerTimeShared` (in conjuction with `CloudletSchedulerTimeShared`. Doing this makes it feasible to handle situations in which we have an insufficient total number of Host PEs for all the VMs. As a matter of fact, this VM scheduling policy allows the sharing of the same PEs by multiple VMs.
+It's interesting to explore the possibilities that are offered by other policies regarding VM scheduling. For instance, in this simulation we are changing it from `VmSchedulerSpaceShared` to `VmSchedulerTimeShared` (in conjunction with `CloudletSchedulerTimeShared`). Doing this makes it feasible to handle situations in which we have an insufficient total number of Host PEs for all the VMs. As a matter of fact, this VM scheduling policy allows the sharing of the same PEs by multiple VMs.
 
 The configuration is changed as follows:
 - Num of datacenters = 2
@@ -124,7 +124,7 @@ Total cost: 1886.47$
 ```
 
 ### IaaS / PaaS / FaaS
-The second category of simulation that have been performed regard a cloud model that resembles a subset of the services offered by AWS. In particular, with respect to the previous simulation, this model is implementing a scenario of a larger scale, offering model flexibile services.
+The second category of simulation that have been performed regard a cloud model that resembles a subset of the services offered by AWS. In particular, with respect to the previous simulation, this model is implementing a scenario of a larger scale, offering more flexible services.
 
 ### IaasPaasFaasSimulationBasic
 
@@ -149,13 +149,13 @@ The second category of simulation that have been performed regard a cloud model 
 
 #### Policies
 
-Due to the high level of configurability implemented in these simulations, autoscaling can be completely handle through configuration files. It is possible to enable horizontal scaling, vertical scaling, but also both in combination.
+Due to the high level of configurability implemented in these simulations, autoscaling can be completely customized through configuration files. It is possible to enable horizontal scaling, vertical scaling, and also both in combination.
 
 In this model there is a clear distinction between IaaS/PaaS and FaaS tasks. Indeed, the former is a relatively new deployment model that has different requirements. In particular, FaaS cloudlets are much less expensive in terms of computing power, and they are allocated to specific lightweight VMs. To achieve this, a dedicated broker has been created to assign this kind of cloudlets to their specific VMs.
 To test elasticity capabilities that can be enforced by customers, the list of cloudlets is not static but changes during the simulation. Periodically, new cloudlets are added to the queue (the number of newly created tasks and the duration until they are created can be changed in configurations). For the first simulation:
 
 - 12 cloudlets are created (4 IaaS, 4 PaaS, 4 FaaS) every time the simulation clock advances
-- New cloudlets are added until the simulation clock arrives at 2.0
+- New cloudlets are added until the simulation clock arrives at 2.0 (needed to avoid an infinite simulation)
 
 The other policies employed are the following:
 

@@ -50,9 +50,7 @@ object IaasPaasFaasSimulationBasic:
   val brokerFaas = new DatacenterBrokerSimple(simulation)
 
   def Start() = {
-
-    CloudletExecutionTask
-
+    
     val numOfDatacenters = config.getInt("datacenter.num")
 
     val datacenters: List[Datacenter] = createDatacenters(simulation, List.empty, numOfDatacenters)
