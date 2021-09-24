@@ -39,7 +39,7 @@ object VmWithScalingFactory {
     }
   }
 
-  def apply(scalingStrategyId: Int, vmPEs: Int): Vm = { // deploymentModel: DeploymentModel
+  def apply(scalingStrategyId: Int, vmPEs: Int, vmMips: Int =  config.getInt("host.mipsCapacityPE")): Vm = { // deploymentModel: DeploymentModel
 
     /*    val config = ObtainConfigReference("saasSimulation") match {
           case Some(value) => value
@@ -47,7 +47,7 @@ object VmWithScalingFactory {
         }
         val logger = CreateLogger(classOf[BasicCloudSimPlusExample])*/
 
-    val vm = createVm(vmPEs)
+    val vm = createVm(vmPEs, vmMips)
 
     val scalingStrategy: ScalingStrategy = mapScalingIdToStrategy(scalingStrategyId);
 
@@ -62,14 +62,12 @@ object VmWithScalingFactory {
     }
   }
 
-  def createVm(vmPEs: Int = config.getInt("vm.PEs")): Vm = {
-    val hostMips = config.getInt("host.mipsCapacityPE") // NO!!!!!
-    //val vmPEs = if(deploymentModel == DeploymentModel.FAAS) config.getInt("vm.faasVms.PEs") else config.getInt("vm.PEs")
+  def createVm(vmPEs: Int = config.getInt("vm.PEs"), vmMips: Int =  config.getInt("host.mipsCapacityPE")): Vm = {
     val ramInMBs = config.getInt("vm.RAMInMBs")
     val storageInMBs = config.getLong("vm.StorageInMBs")
     val bwInMBps = config.getInt("vm.BandwidthInMBps")
 
-    new VmSimple(hostMips, vmPEs)
+    new VmSimple(vmMips, vmPEs)
       .setRam(ramInMBs)
       .setBw(bwInMBps)
       .setSize(storageInMBs)

@@ -1,6 +1,6 @@
 package Utils
 
-import Simulations.IaaS_PaaS_FaaS.IaasPaasFaasSimulationBasic.config
+import Simulations.MapReduce.MapReduceSimulation.config
 import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelDynamic, UtilizationModelFull, UtilizationModelStochastic}

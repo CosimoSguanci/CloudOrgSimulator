@@ -3,12 +3,13 @@
 
 # Overview
 ## Implemented cloud models
-- A SaaS infrastructure inspired by Google Workspace. It was modeled from the point of view of the service provider that is offering some type of cloud services (in particular email, cloud docs and cloud storage) to an organization (such as another company that uses it as a business tool)
+- A SaaS infrastructure inspired by Google Workspace. It was modeled from the point of view of the service provider that is offering some type of cloud services (in particular email, cloud docs and cloud storage) to an organization (such as another company that uses them as a business tools)
 - An IaaS/PaaS/FaaS infrastructure that resembles a subset of Amazon Web Services 
+- A MapReduce framework deployed on the cloud, following a PaaS deployment model
 
-Once these two models have been built, they have been simulated under several conditions: different workloads, different policies for allocation of resource and scaling strategies.
+Once these models have been built, they have been simulated under several conditions: different workloads, different policies for allocation of resource and scaling strategies.
 
-In all the simulations, a configuration-oriented approach has been employed, to achieve high parameterizable and customizable simulations, therefore minimizing changes to the source code. Some example of parameters included in the configurations are:
+In all the simulations, a configuration-oriented approach has been employed, to achieve high parameterizable and customizable simulations. Some example of parameters included in the configurations are:
 - Datacenter parameters, costs for unit of resources, SAN storage details
 - Details about computing resources of Hosts contained in datacenters and VMs to be allocated
 - Parameters regarding computing tasks (Cloudlets), including how many cloudlets of different type to be included in the simulation
@@ -46,14 +47,14 @@ autoscaling {
 ```
 
 ## SaaS
-As explained before, the implemented SaaS model is inspired by Google Workspace. That is, it consists of a set of business services deployed on the cloud and offered to customers. In a SaaS model customers do not have the possibility to change parameters, policies or other characteristics of the infrastructure. As an example, customers cannot handle the autoscaling of the system. These abstractions lead to a simplified management for clients: the main drawback is its low flexibility that can cause, for example, degradation of performance.
+As explained before, the implemented SaaS model is inspired by Google Workspace. That is, it consists of a set of business services deployed on the cloud and offered to organizations. In a SaaS model customers do not have the possibility to change parameters, policies or other characteristics of the infrastructure. As an example, customers cannot handle the autoscaling of the system. These abstractions lead to a simplified management for clients: the main drawback is its low flexibility that can cause, for example, degradation of performance.
 
 In the model, the `CloudletSimple` class has been extended to be able to specify the type of task submitted by the customer to the infrastructure. To have a representative subset of the typical services that are offered, the `WorkspaceCloudlet` can be of one of the following types:
-- `EMAIL` (e.g., the Gmail service)
+- `EMAIL` (e.g., Gmail)
 - `CLOUD_DOCS` (e.g., Google Docs)
 - `CLOUD_STORAGE` (e.g., Google Drive)
 
-The last type of task differs from the other regarding the main resource needed, that is storage capability. These characteristics has been modeled by making each `Cloudlet` of this kind require a file (3 types of files can be requested, based on the size of the file itself). Files are maintained and provided to customers by making use of Storage Area Networks (SANs) in each datacenter.
+The last type of task differs from the other regarding the main resource needed, that is storage capability. These characteristics have been modeled by making each `Cloudlet` of this kind require a file (3 types of files can be requested, based on the size of the file itself). Files are maintained and provided to customers by making use of Storage Area Networks (SANs) in each datacenter.
 
 #### Main parameters
 - Number of datacenters = 2 
@@ -94,9 +95,8 @@ The first result that has been found is that, with the basic configuration, the 
 
 ### SaasWorkspaceSimulationImproved
 
-
 #### Results
-By changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice an enormous improvement:
+By changing the `CloudletScheduler` from `CloudletSchedulerTimeShared` to `CloudletSchedulerSpaceShared` it is possible to notice a substantial improvement:
 
 ```
 Time to execute all cloudlets: 40 s
@@ -104,6 +104,27 @@ Total cost: 2046.62$
 ```
 
 This is due to the fact that in the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicate a small slice time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
+
+### SaasWorkspaceSimulationVmSchedulerTimeShared
+
+It's interesting to explore the possibilities that are offered by other policies regarding VM scheduling. For instance, in this simulation we are changing it from `VmSchedulerSpaceShared` to `VmSchedulerTimeShared`. Doing this makes it feasible to handle situations in which we have an insufficient total number of Host PEs for all the VMs. As a matter of fact, this VM scheduling policy allows the sharing of the same PEs by multiple VMs. 
+
+The configuration is changed as follows:
+- Num of datacenters = 2
+- Num of hosts per datacenter = 5
+- Host PEs = 2
+- MIPS for PE = 1000
+- Num of VMs = 40
+- MIPS for VM = 500
+- PEs for VM = 1
+- 40 cloudlets, 1 PE for every cloudlet
+
+We can notice that, in this case, we have 20 PEs available in hosts but the cumulative VMs requirements are 40 PEs. However, the total MIPS is sufficient to satisfy the demand, therefore the new VM scheduling policy lead to the following results:
+
+```
+Time to execute all cloudlets: 40 s
+Total cost: 1886.47$
+```
 
 ### IaaS / PaaS / FaaS
 The second category of simulation that have been performed regard a cloud model that resembles a subset of the services offered by AWS. In particular, with respect to the previous simulation, this model is implementing a scenario of a larger scale, offering model flexibile services.

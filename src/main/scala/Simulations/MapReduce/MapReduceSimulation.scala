@@ -148,6 +148,7 @@ object MapReduceSimulation:
       .setCostPerBw(config.getDouble("datacenter.costPerBw"));
 
     datacenter.setSchedulingInterval(config.getInt("datacenter.schedulingInterval"))
+
     createNetwork(datacenter)
     return datacenter
   }
@@ -235,14 +236,14 @@ object MapReduceSimulation:
   def createMappers(): List[MapReduceCloudlet] = {
     val numOfMappers: Int = config.getInt("cloudlet.numOfMappers")
     val mappers: List[MapReduceCloudlet] = (1 to numOfMappers).map(i => new MapReduceCloudlet(TypeOfMapReduceTask.MAPPER)).toList
-    (0 to (numOfMappers - 1)).foreach(i => mappers(i).setUtilizationModel(new UtilizationModelFull()).setVm(vmList(i)))
+    (0 to (numOfMappers - 1)).foreach(i => mappers(i).setUtilizationModel(new UtilizationModelDynamic(0.7)).setVm(vmList(i)))
     return mappers
   }
 
   def createReducers(): List[MapReduceCloudlet] = {
     val numOfReducers: Int = config.getInt("cloudlet.numOfReducers")
     val reducers: List[MapReduceCloudlet] = (1 to numOfReducers).map(i => new MapReduceCloudlet(TypeOfMapReduceTask.REDUCER)).toList
-    (0 to (numOfReducers - 1)).foreach(i => reducers(i).setUtilizationModel(new UtilizationModelFull()).setVm(vmList(81)))
+    (0 to (numOfReducers - 1)).foreach(i => reducers(i).setUtilizationModel(new UtilizationModelDynamic(0.4)).setVm(vmList(i)))
     return reducers
   }
 
