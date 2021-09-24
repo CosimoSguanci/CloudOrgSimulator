@@ -3,7 +3,7 @@ package Utils
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Simulations.IaaS_PaaS_FaaS.IaasPaasFaasSimulationBasic.config
 import org.cloudbus.cloudsim.resources.{Bandwidth, Processor, Ram}
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerTimeShared, CloudletSchedulerSpaceShared}
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.vms.{Vm, VmSimple}
 import org.cloudsimplus.autoscaling.resources.{ResourceScalingGradual, ResourceScalingInstantaneous}
 import org.cloudsimplus.autoscaling.{HorizontalVmScalingSimple, VerticalVmScalingSimple, VmScaling}
@@ -39,7 +39,7 @@ object VmWithScalingFactory {
     }
   }
 
-  def apply(scalingStrategyId: Int, vmPEs: Int, vmMips: Int =  config.getInt("host.mipsCapacityPE")): Vm = { // deploymentModel: DeploymentModel
+  def apply(scalingStrategyId: Int, vmPEs: Int, vmMips: Int = config.getInt("host.mipsCapacityPE")): Vm = { // deploymentModel: DeploymentModel
 
     /*    val config = ObtainConfigReference("saasSimulation") match {
           case Some(value) => value
@@ -62,7 +62,7 @@ object VmWithScalingFactory {
     }
   }
 
-  def createVm(vmPEs: Int = config.getInt("vm.PEs"), vmMips: Int =  config.getInt("host.mipsCapacityPE")): Vm = {
+  def createVm(vmPEs: Int = config.getInt("vm.PEs"), vmMips: Int = config.getInt("host.mipsCapacityPE")): Vm = {
     val ramInMBs = config.getInt("vm.RAMInMBs")
     val storageInMBs = config.getLong("vm.StorageInMBs")
     val bwInMBps = config.getInt("vm.BandwidthInMBps")
@@ -81,13 +81,13 @@ object VmWithScalingFactory {
 
   def buildHorizontalScaling(vm: Vm): Vm = {
     val horizontalScaling: HorizontalVmScalingSimple = new HorizontalVmScalingSimple();
-/*    horizontalScaling
-      .setVmSupplier(new Supplier[Vm] {
-        override def get(): Vm = createVm()
-      })
-      .setOverloadPredicate(new Predicate[Vm] {
-        override def test(t: Vm): Boolean = isVmOverloaded(t)
-      })*/
+    /*    horizontalScaling
+          .setVmSupplier(new Supplier[Vm] {
+            override def get(): Vm = createVm()
+          })
+          .setOverloadPredicate(new Predicate[Vm] {
+            override def test(t: Vm): Boolean = isVmOverloaded(t)
+          })*/
     horizontalScaling.setVmSupplier(() => createVm()).setOverloadPredicate(isVmOverloaded)
     vm.setHorizontalScaling(horizontalScaling)
   }

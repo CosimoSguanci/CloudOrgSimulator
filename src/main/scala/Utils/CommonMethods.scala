@@ -1,5 +1,7 @@
 package Utils
 
+import Utils.CloudletTypes.*
+import Utils.PolicyEnums.{CloudletSchedulerType, UtilizationModelType, VmAllocationType, VmSchedulerType}
 import com.typesafe.config.Config
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyAbstract, VmAllocationPolicyBestFit, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple
@@ -140,8 +142,8 @@ object CommonMethods {
 
     emailCloudlets.foreach(c =>
       c.setNumberOfPes(config.getInt("cloudlet.PEs"))
-      .setLength(config.getInt("cloudlet.length"))
-      .setUtilizationModel(new UtilizationModelDynamic(config.getDouble("utilizationRatio"))))
+        .setLength(config.getInt("cloudlet.length"))
+        .setUtilizationModel(new UtilizationModelDynamic(config.getDouble("utilizationRatio"))))
 
     docsCloudlets.foreach(c =>
       c.setNumberOfPes(config.getInt("cloudlet.PEs"))

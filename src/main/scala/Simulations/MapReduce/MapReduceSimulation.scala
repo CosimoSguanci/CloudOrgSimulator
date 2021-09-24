@@ -1,8 +1,9 @@
 package Simulations.MapReduce
 
-import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{DeploymentModel, MapReduceCloudlet, ScalingStrategy, TypeOfMapReduceTask, TypeOfService, VmWithScalingFactory}
+import Utils.CloudletTypes.*
+import Utils.{ScalingStrategy, VmWithScalingFactory}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.network.{CloudletExecutionTask, CloudletReceiveTask, CloudletSendTask, NetworkCloudlet}
@@ -15,17 +16,16 @@ import org.cloudbus.cloudsim.hosts.network.NetworkHost
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
 import org.cloudbus.cloudsim.network.switches.EdgeSwitch
 import org.cloudbus.cloudsim.network.topologies.BriteNetworkTopology
-import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
+import org.cloudbus.cloudsim.provisioners.{ResourceProvisioner, ResourceProvisionerSimple}
 import org.cloudbus.cloudsim.resources.*
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerSpaceShared, VmSchedulerTimeShared}
 import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelDynamic, UtilizationModelFull}
+import org.cloudbus.cloudsim.vms.network.NetworkVm
 import org.cloudbus.cloudsim.vms.{Vm, VmCost, VmSimple}
 import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
-import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
-import org.cloudbus.cloudsim.vms.network.NetworkVm
 
 import java.util.Comparator
 import scala.::
@@ -61,14 +61,14 @@ object MapReduceSimulation:
     val numOfDatacenters = config.getInt("datacenter.num")
 
     val datacenters: List[Datacenter] = createDatacenters(simulation, List.empty, numOfDatacenters)
-/*    val datacenterStorageList: List[DatacenterStorage] = createDatacenterStorage(numOfDatacenters);
-
-    datacenters.lazyZip(datacenterStorageList).map {
-      (d, ds) => {
-        d.setDatacenterStorage(ds)
-        ds.setDatacenter(d)
-      }
-    }*/
+    /*    val datacenterStorageList: List[DatacenterStorage] = createDatacenterStorage(numOfDatacenters);
+    
+        datacenters.lazyZip(datacenterStorageList).map {
+          (d, ds) => {
+            d.setDatacenterStorage(ds)
+            ds.setDatacenter(d)
+          }
+        }*/
 
 
     //setupFileRequirementsForCloudlets(cloudletList);
@@ -223,7 +223,7 @@ object MapReduceSimulation:
   def createVms(): List[Vm] = {
     //val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfVms = config.getInt("vm.num")
-    (1 to numOfVms).map(i => new NetworkVm(i,  config.getInt("host.mipsCapacityPE"),  config.getInt("vm.PEs")).setCloudletScheduler(new CloudletSchedulerTimeShared())).toList
+    (1 to numOfVms).map(i => new NetworkVm(i, config.getInt("host.mipsCapacityPE"), config.getInt("vm.PEs")).setCloudletScheduler(new CloudletSchedulerTimeShared())).toList
     //val numOfFaasVMs = config.getInt("vm.faasVms.num") // specialized lightweight VMs to run serveless computations
 
     //(1 to numOfStandardVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.PEs"))).toList
@@ -290,24 +290,24 @@ object MapReduceSimulation:
     })
   }
 
-/*  def periodicEventHandler(eventInfo: EventInfo) = {
-    val time = eventInfo.getTime()
-    if(time <= config.getInt("newCloudletsDuration")) {
-      val howManyNewCloudlets = config.getInt("howManyNewCloudlets")
-      val newIaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.IAAS)).toList
-      val newPaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.PAAS)).toList
-      val newFaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.FAAS)).toList
-
-      val newCloudlets = newIaasCloudlets ::: newPaasCloudlets //::: newFaasCloudlets
-      newCloudlets.foreach(c => c.setupComputingResources());
-      newFaasCloudlets.foreach(c => c.setupComputingResources())
-
-
-
-      broker0.submitCloudletList(newCloudlets.asJava);
-      brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
-    }
-  }*/
+  /*  def periodicEventHandler(eventInfo: EventInfo) = {
+      val time = eventInfo.getTime()
+      if(time <= config.getInt("newCloudletsDuration")) {
+        val howManyNewCloudlets = config.getInt("howManyNewCloudlets")
+        val newIaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.IAAS)).toList
+        val newPaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.PAAS)).toList
+        val newFaasCloudlets: List[MapReduceCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new MapReduceCloudlet(DeploymentModel.FAAS)).toList
+  
+        val newCloudlets = newIaasCloudlets ::: newPaasCloudlets //::: newFaasCloudlets
+        newCloudlets.foreach(c => c.setupComputingResources());
+        newFaasCloudlets.foreach(c => c.setupComputingResources())
+  
+  
+  
+        broker0.submitCloudletList(newCloudlets.asJava);
+        brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
+      }
+    }*/
 
   def setupFileRequirementsForCloudlets(cloudletList: List[MapReduceCloudlet]): Unit = {
     val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")

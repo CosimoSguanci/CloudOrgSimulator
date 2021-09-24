@@ -2,6 +2,8 @@ package Simulations.IaaS_PaaS_FaaS
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.*
+import Utils.CloudletTypes.*
+import Utils.PolicyEnums.{CloudletSchedulerType, UtilizationModelType, VmAllocationType, VmSchedulerType}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
@@ -43,7 +45,7 @@ object IaasPaasFaasSimulationBasic:
   val logger = CreateLogger(classOf[IaasPaasFaasSimulationBasic])
 
   val vmList: List[Vm] = CommonMethods.createVmsIaaSPaaS(config)
-  
+
   // Here UtilizationModelType.FULL is used, to simulate the stochastic begaviour described in the documentation, it is enough to change it to UtilizationModelType.STOCHASTIC
   val cloudletList: List[IaasPaasFaasCloudlet] = CommonMethods.createCloudletsIaaSPaaS(config, UtilizationModelType.FULL)
 
@@ -130,7 +132,7 @@ object IaasPaasFaasSimulationBasic:
       val newFaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
 
       val newCloudlets = newIaasCloudlets ::: newPaasCloudlets
-      
+
       // Different computing resources for IaaS/PaaS vs FaaS
       newCloudlets.foreach(c => c.setupComputingResources())
       newFaasCloudlets.foreach(c => c.setupComputingResources())

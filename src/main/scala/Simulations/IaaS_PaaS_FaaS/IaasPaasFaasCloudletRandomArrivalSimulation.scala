@@ -1,8 +1,10 @@
 package Simulations.IaaS_PaaS_FaaS
 
-import com.typesafe.config.{Config, ConfigFactory}
 import HelperUtils.{CreateLogger, ObtainConfigReference}
-import Utils.{CommonMethods, DeploymentModel, IaasPaasFaasCloudlet, ScalingStrategy, TypeOfService, UtilizationModelType, VmAllocationType, VmSchedulerType, VmWithScalingFactory}
+import Utils.CloudletTypes.*
+import Utils.PolicyEnums.{CloudletSchedulerType, UtilizationModelType, VmAllocationType, VmSchedulerType}
+import Utils.{CommonMethods, ScalingStrategy, VmWithScalingFactory}
+import com.typesafe.config.{Config, ConfigFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicyRoundRobin, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -11,16 +13,15 @@ import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.datacenters.{Datacenter, DatacenterSimple}
 import org.cloudbus.cloudsim.distributions.{ContinuousDistribution, UniformDistr}
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
-import org.cloudbus.cloudsim.provisioners.ResourceProvisioner
+import org.cloudbus.cloudsim.provisioners.{ResourceProvisioner, ResourceProvisionerSimple}
 import org.cloudbus.cloudsim.resources.*
+import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerSpaceShared, VmSchedulerTimeShared}
 import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
 import org.cloudbus.cloudsim.vms.{Vm, VmCost, VmSimple}
 import org.cloudsimplus.autoscaling.VmScaling
 import org.cloudsimplus.builders.tables.{CloudletsTableBuilder, TextTableColumn}
 import org.cloudsimplus.listeners.EventInfo
-import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
-import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 
 import java.util.Comparator
 import scala.::
@@ -31,7 +32,7 @@ import scala.language.postfixOps
  * The second IaaS / PaaS / FaaS simulation, that tries to model a more realistic behaviour regarding new cloudlets. Every time the simulation clock
  * advances, new cloudlets are created with a certain (configurable) probability.
  */
-class  IaasPaasFaasCloudletRandomArrivalSimulation
+class IaasPaasFaasCloudletRandomArrivalSimulation
 
 object IaasPaasFaasCloudletRandomArrivalSimulation:
   val CONFIG = "iaasPaasFaasSimulationCloudletRandomArrival"
@@ -120,13 +121,13 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
   /**
    * The listener function that is fired every time the simulation clock advances. In this case, every time this function is called, with a fixed (configurable) probability
    * some cloudlets are added to the simulation and submitted to brokers.
-   * 
+   *
    * @param eventInfo
    * @return
    */
   def periodicEventHandler(eventInfo: EventInfo) = {
     val time = eventInfo.getTime()
-    if(random.sample() < config.getDouble("newCloudletsProbability")) {
+    if (random.sample() < config.getDouble("newCloudletsProbability")) {
       val howManyNewCloudlets = scala.util.Random.nextInt(config.getInt("howManyNewCloudlets"))
       val newIaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.IAAS)).toList
       val newPaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.PAAS)).toList

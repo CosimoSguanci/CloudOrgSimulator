@@ -2,6 +2,8 @@ package Simulations.SaaS
 
 import HelperUtils.{CreateLogger, ObtainConfigReference}
 import Utils.*
+import Utils.CloudletTypes.WorkspaceCloudlet
+import Utils.PolicyEnums.{CloudletSchedulerType, UtilizationModelType, VmAllocationType, VmSchedulerType}
 import com.typesafe.config.{Config, ConfigFactory}
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyBestFit, VmAllocationPolicyRandom, VmAllocationPolicySimple}
 import org.cloudbus.cloudsim.brokers.{DatacenterBrokerBestFit, DatacenterBrokerFirstFit, DatacenterBrokerHeuristic, DatacenterBrokerSimple}
@@ -104,7 +106,7 @@ object SaasWorkspaceSimulationVmSchedulerTimeShared:
 
   /**
    * Creates VMs that deviate from the "standard" policy because they have a MIPS parameter that is different from that of the Host PE.
-   * 
+   *
    * @return The list of Virtual Machines of all the datacenters
    */
   def createVms(): List[Vm] = {

@@ -1,4 +1,4 @@
-package Utils
+package Utils.CloudletTypes
 
 import Simulations.SaaS.SaasWorkspaceSimulationBasic.config
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}

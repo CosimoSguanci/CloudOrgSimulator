@@ -1,4 +1,4 @@
-package Utils
+package Utils.CloudletTypes
 
 import Simulations.IaaS_PaaS_FaaS.IaasPaasFaasSimulationBasic.config
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
@@ -11,9 +11,9 @@ class IaasPaasFaasCloudlet(val deploymentModel: DeploymentModel)
   extends CloudletSimple(
     config.getInt("cloudlet.defaultLength"),
     config.getInt("cloudlet.defaultPEs"),
-    new UtilizationModelFull()) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+    new UtilizationModelFull()) { 
 
-  
+
   def setupComputingResources(): Unit = {
     deploymentModel match {
       case DeploymentModel.IAAS => {

@@ -1,4 +1,4 @@
-package Utils
+package Utils.CloudletTypes
 
 import Simulations.MapReduce.MapReduceSimulation.config
 import org.cloudbus.cloudsim.cloudlets.network.NetworkCloudlet
@@ -12,7 +12,7 @@ class MapReduceCloudlet(val typeOfMapReduceTask: TypeOfMapReduceTask)
   extends NetworkCloudlet(
     config.getInt("cloudlet.defaultLength"),
     config.getInt("cloudlet.defaultPEs"),
-    ) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+  ) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
 
 
   def getTypeOfMapReduceTaskText(): String = {
