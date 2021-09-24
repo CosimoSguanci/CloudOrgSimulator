@@ -209,6 +209,33 @@ That is, every time the simulation clock advances, with probability configurable
 #### No autoscaling
 ```
 Average cost: 29278$
-Average max execution time for cloudlet: 89 s
-Average number of finished cloudlets: 
+Average max execution time for cloudlet: 89.5 s
+Average number of finished cloudlets: 10660
 ```
+
+#### Horizontal autoscaling
+```
+Average cost: 390998$
+Average max execution time for cloudlet: 87.34 s
+Average number of finished cloudlets: 12102
+```
+
+#### Vertical autoscaling
+```
+Average cost: 15072$
+Average max execution time for cloudlet: 89.5 s
+Average number of finished cloudlets: 10472
+```
+
+### Vertical/Horizontal autoscaling
+```
+Average cost: 373715$
+Average max execution time for cloudlet: 87.53 s
+Average number of finished cloudlets: 13904
+```
+
+The last adopted policy is the most performant. As a matter of fact, in this case the horizontal scaling strategy is very well-suited for increasing the number of VMs and therefore the requests that can be handled in a certain amount of time (it is better in terms of throughput), while the vertical scaling is able to reduce costs by scaling down resources when they are not needed.
+However, the cost of the last policy could be prohibitive for some kind of applications, that could tolerate the loss of performance (~25%) of the policy that only involves vertical scaling.
+Further improvements of this simulation could be:
+- Make the number of new cloudlets that are periodically created random (not only the rate of new arrivals), and increasing the number of simulations to compute the average (to improve precision of the measurement)
+- Also consider a configuration that could favor vertical scaling policies, such as one in which there are enough VMs, but they have (in the starting situation) poor performance in terms of MIPS, RAM capacity and bandwidth.
