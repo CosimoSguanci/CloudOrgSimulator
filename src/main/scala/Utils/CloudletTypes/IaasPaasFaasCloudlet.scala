@@ -4,16 +4,26 @@ import Simulations.IaaS_PaaS_FaaS.IaasPaasFaasSimulationBasic.config
 import org.cloudbus.cloudsim.cloudlets.{Cloudlet, CloudletSimple}
 import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelDynamic, UtilizationModelFull, UtilizationModelStochastic}
 
+/**
+ * Enum used to specify the deployment model of a certain Cloudlet
+ */
 enum DeploymentModel:
   case IAAS, PAAS, FAAS, NOT_SPECIFIED
 
+/**
+ * Represents a Cloudlet to be executed in a Cloud environment that support IaaS, PaaS and FaaS deployment models
+ * 
+ * @param deploymentModel the deployment model for this cloudlet
+ */
 class IaasPaasFaasCloudlet(val deploymentModel: DeploymentModel)
   extends CloudletSimple(
     config.getInt("cloudlet.defaultLength"),
     config.getInt("cloudlet.defaultPEs"),
-    new UtilizationModelFull()) { 
+    new UtilizationModelFull()) {
 
-
+  /**
+   * Differentiates computing resources that are needed for different tasks (e.g., FaaS tasks are generally lighter than IaaS tasks)
+   */
   def setupComputingResources(): Unit = {
     deploymentModel match {
       case DeploymentModel.IAAS => {
@@ -35,7 +45,11 @@ class IaasPaasFaasCloudlet(val deploymentModel: DeploymentModel)
     }
   }
 
-
+  /**
+   * Convert the DeploymentModel enum to String, used to print results
+   * 
+   * @return the string representation of the deployment model
+   */
   def getDeploymentModelText(): String = {
     deploymentModel match {
       case DeploymentModel.IAAS => "Iaas"
@@ -44,5 +58,4 @@ class IaasPaasFaasCloudlet(val deploymentModel: DeploymentModel)
       case _ => "Not specified"
     }
   }
-
 }
