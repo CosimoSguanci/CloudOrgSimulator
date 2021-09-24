@@ -27,6 +27,10 @@ import scala.::
 import scala.jdk.CollectionConverters.*
 import scala.language.postfixOps
 
+/**
+ * The second IaaS / PaaS / FaaS simulation, that tries to model a more realistic behaviour regarding new cloudlets. Every time the simulation clock
+ * advances, new cloudlets are created with a certain (configurable) probability.
+ */
 class  IaasPaasFaasCloudletRandomArrivalSimulation
 
 object IaasPaasFaasCloudletRandomArrivalSimulation:
@@ -81,9 +85,6 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
     // A periodic listener is created, it is called every time the simulation clock advances
     simulation.addOnClockTickListener(periodicEventHandler)
 
-    //brokerIaasPaaS.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
-    //brokerFaas.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
-
     brokerIaasPaaS.submitVmList(vmList.asJava)
     brokerIaasPaaS.submitCloudletList(cloudletList.asJava)
 
@@ -92,7 +93,7 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
 
     logger.info("VMs and Cloudlets submitted to the broker")
 
-    simulation.terminateAt(100)
+    simulation.terminateAt(config.getDouble("simulationDuration"))
     simulation.addOnClockTickListener(periodicEventHandler);
 
     logger.info("The simulation is about to start...")
@@ -116,19 +117,26 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
     println("Max exec time: " + (c.getActualCpuTime))
   }
 
+  /**
+   * The listener function that is fired every time the simulation clock advances. In this case, every time this function is called, with a fixed (configurable) probability
+   * some cloudlets are added to the simulation and submitted to brokers.
+   * 
+   * @param eventInfo
+   * @return
+   */
   def periodicEventHandler(eventInfo: EventInfo) = {
     val time = eventInfo.getTime()
-    if(random.sample() < 0.5) {
+    if(random.sample() < config.getDouble("newCloudletsProbability")) {
       val howManyNewCloudlets = scala.util.Random.nextInt(config.getInt("howManyNewCloudlets"))
       val newIaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.IAAS)).toList
       val newPaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.PAAS)).toList
       val newFaasCloudlets: List[IaasPaasFaasCloudlet] = (1 to (howManyNewCloudlets / 3)).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
 
-      val newCloudlets = newIaasCloudlets ::: newPaasCloudlets //::: newFaasCloudlets
-      newCloudlets.foreach(c => c.setupComputingResources());
+      val newCloudlets = newIaasCloudlets ::: newPaasCloudlets
+      newCloudlets.foreach(c => c.setupComputingResources())
       newFaasCloudlets.foreach(c => c.setupComputingResources())
 
-      brokerIaasPaaS.submitCloudletList(newCloudlets.asJava);
+      brokerIaasPaaS.submitCloudletList(newCloudlets.asJava)
       brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
     }
   }

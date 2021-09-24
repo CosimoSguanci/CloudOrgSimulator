@@ -86,9 +86,6 @@ object IaasPaasFaasSimulationBasic:
     // A periodic listener is created, it is called every time the simulation clock advances
     simulation.addOnClockTickListener(periodicEventHandler)
 
-    //brokerIaasPaaS.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
-    //brokerFaas.setVmDestructionDelayFunction((vm) => config.getDouble("vm.destructionDelay"))
-
     brokerIaasPaaS.submitVmList(vmList.asJava)
     brokerIaasPaaS.submitCloudletList(cloudletList.asJava)
 
@@ -118,7 +115,7 @@ object IaasPaasFaasSimulationBasic:
   }
 
   /**
-   * The listener function that is fired every time the simulation clock advances. In this case every time a certain (configurable)
+   * The listener function that is fired every time the simulation clock advances. In this case, every time this function is called, a certain (configurable)
    * number of cloudlets are added to the simulation and submitted to brokers.
    *
    * @param eventInfo
