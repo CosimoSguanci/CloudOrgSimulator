@@ -43,7 +43,7 @@ object IaasPaasFaasSimulationBasic:
   val logger = CreateLogger(classOf[IaasPaasFaasSimulationBasic])
 
   val vmList: List[Vm] = CommonMethods.createVmsIaaSPaaS(config)
-  val cloudletList: List[IaasPaasFaasCloudlet] = CommonMethods.createCloudletsIaaSPaaS(config)
+  val cloudletList: List[IaasPaasFaasCloudlet] = CommonMethods.createCloudletsIaaSPaaS(config, UtilizationModelType.STOCHASTIC)
 
   val faasVmList: List[Vm] = CommonMethods.createVmsFaaS(config)
   val faasCloudletList: List[IaasPaasFaasCloudlet] = CommonMethods.createCloudletsFaaS(config)
@@ -58,7 +58,6 @@ object IaasPaasFaasSimulationBasic:
 
     val datacenters: List[Datacenter] = CommonMethods.createDatacenters(config, simulation, List.empty, numOfDatacenters, VmAllocationType.VM_ALLOCATION_SIMPLE, VmSchedulerType.VM_SCHEDULER_SPACE_SHARED)
     logger.info(s"$numOfDatacenters Datacenters created successfully")
-
 
     val datacenterStorageList: List[DatacenterStorage] = CommonMethods.createDatacenterStorage(config, numOfDatacenters, config.getInt("datacenter.numOfStoredFiles"));
 

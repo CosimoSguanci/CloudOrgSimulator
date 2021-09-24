@@ -183,8 +183,13 @@ Total number of finished cloudlets: 32780
 
 Changing the VM allocation policy to `VmAllocationPolicyBestFit` slightly reduces the costs but also the total number of finished cloudlets is lower. For these reasons, and also considering its computational complexity (O(N) where N is the number of hosts), it may not be suitable for a large scale scenario.
 
-To explore more realistic scenario, it's possible to randomize the utilization of resources, by using  `UtilizationModelStochastic`. The difference in terms of cost with previous is interesting:
+To explore more realistic scenario, it's possible to randomize the utilization of resources, by using  `UtilizationModelStochastic`. In our simulations it was enough to create the IaaS and PaaS cloudlets passing `UtilizationModelType.STOCHASTIC` to `createCloudletsIaaSPaaS`. This utilization model has not been used for FaaS cloudlets because it's reasonable to assume that the FaaS Tasks always fully use their lightweight VM to terminate the task as soon as possible.
+The difference in terms of cost with previous simulations is interesting (results are shown as average over a set of simulation instances, since we are modeling a stochastic behaviour):
 
 ```
-Total cost: 8716$
+Total cost: 13107.82$
+Max execution time for cloudlet: 103.45 s
+Total number of finished cloudlets: 32780
 ```
+
+The results show higher cost with respect to the simulation with `UtilizationModelStochastic`. This is probably due to the fact that performing an efficient vertical scaling is more difficult in this setting, therefore if before the resources were downscaled at the start of the simulation and then substantially left unchanged, now the resources must be continuously added and removed from the system. This leads to over-provisioning of resources and overhead for allocation/deallocating them, that is reflected by the higher cloudlet maximum execution time.

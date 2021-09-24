@@ -10,7 +10,7 @@ import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
 import org.cloudbus.cloudsim.resources.*
 import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerAbstract, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerAbstract, VmSchedulerSpaceShared, VmSchedulerTimeShared}
-import org.cloudbus.cloudsim.utilizationmodels.UtilizationModelDynamic
+import org.cloudbus.cloudsim.utilizationmodels.{UtilizationModelAbstract, UtilizationModelDynamic, UtilizationModelFull, UtilizationModelStochastic}
 import org.cloudbus.cloudsim.vms.{Vm, VmCost}
 
 import scala.jdk.CollectionConverters.*
@@ -111,6 +111,14 @@ object CommonMethods {
     cloudletSchedulerType match {
       case CloudletSchedulerType.CLOUDLET_SCHEDULER_SPACE_SHARED => new CloudletSchedulerSpaceShared()
       case CloudletSchedulerType.CLOUDLET_SCHEDULER_TIME_SHARED => new CloudletSchedulerTimeShared()
+    }
+  }
+
+  private def getUtilizationModel(utilizationModelType: UtilizationModelType, config: Config): UtilizationModelAbstract = {
+    utilizationModelType match {
+      case UtilizationModelType.FULL => new UtilizationModelFull()
+      case UtilizationModelType.DYNAMIC => new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
+      case UtilizationModelType.STOCHASTIC => new UtilizationModelStochastic()
     }
   }
 
@@ -215,7 +223,7 @@ object CommonMethods {
     (1 to numOfFaasVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.faasVms.PEs"))).toList
   }
 
-  def createCloudletsIaaSPaaS(config: Config): List[IaasPaasFaasCloudlet] = {
+  def createCloudletsIaaSPaaS(config: Config, utilizationModelType: UtilizationModelType): List[IaasPaasFaasCloudlet] = {
     val numOfIaasCloudlets = config.getInt("cloudlet.iaas.num")
     val numOfPaasCloudlets = config.getInt("cloudlet.paas.num")
 
@@ -224,6 +232,9 @@ object CommonMethods {
 
     iaasCloudlets.foreach(c => c.setupComputingResources())
     paasCloudlets.foreach(c => c.setupComputingResources())
+
+    iaasCloudlets.foreach(c => c.setUtilizationModel(getUtilizationModel(utilizationModelType, config)))
+    paasCloudlets.foreach(c => c.setUtilizationModel(getUtilizationModel(utilizationModelType, config)))
 
     iaasCloudlets ::: paasCloudlets
   }
