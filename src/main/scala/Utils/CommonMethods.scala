@@ -17,7 +17,22 @@ import org.cloudbus.cloudsim.vms.{Vm, VmCost}
 
 import scala.jdk.CollectionConverters.*
 
+/**
+ * Singleton used to share common methods and avoid code duplication across simulations
+ */
 object CommonMethods {
+
+  /**
+   * Create the list of Datacenters needed for the simulation
+   *
+   * @param config           The configuration corresponding to the current simulation
+   * @param simulation       The current simulation
+   * @param datacenters      Partial list of datacenters (the method is recursive to follow functional programming best practices)
+   * @param numOfDatacenters The total number of datacenters to be created
+   * @param vmAllocation     The policy that will be used to place VMs in Hosts
+   * @param vmScheduler      The policy that will be used to share processing power of a Host among VMs
+   * @return the list of datacenters of the system
+   */
   def createDatacenters(config: Config, simulation: CloudSim, datacenters: List[NetworkDatacenter], numOfDatacenters: Int, vmAllocation: VmAllocationType, vmScheduler: VmSchedulerType): List[NetworkDatacenter] = {
 
     if (datacenters.length == numOfDatacenters) {
@@ -29,11 +44,19 @@ object CommonMethods {
     createDatacenters(config, simulation, innerDatacenterList, numOfDatacenters, vmAllocation, vmScheduler);
   }
 
+  /**
+   * Creates a single datacenter given the parameters in the configuration
+   *
+   * @param config       The configuration corresponding to the current simulation
+   * @param simulation   The current simulation
+   * @param vmAllocation The policy that will be used to place VMs in Hosts
+   * @param vmScheduler  The policy that will be used to share processing power of a Host among VMs
+   * @return the newly created instance of Datacenter
+   */
   def createDatacenter(config: Config, simulation: CloudSim, vmAllocation: VmAllocationType, vmScheduler: VmSchedulerType): NetworkDatacenter = {
     val numOfHosts = config.getInt("host.num")
     val range = 1 to numOfHosts
     val hostList: List[Host] = range.map(i => createHost(config, getVmScheduler(vmScheduler))).toList
-
 
     val datacenter: NetworkDatacenter = new NetworkDatacenter(simulation, hostList.asJava, getVmAllocation(vmAllocation))
 
@@ -44,10 +67,16 @@ object CommonMethods {
       .setCostPerStorage(config.getDouble("datacenter.costPerStorage"))
       .setCostPerBw(config.getDouble("datacenter.costPerBw"));
 
-    //datacenter.setSchedulingInterval(100)
     return datacenter
   }
 
+  /**
+   * Creates an host to be placed inside a datacenter
+   *
+   * @param config      The configuration corresponding to the current simulation
+   * @param vmScheduler The policy that will be used to share processing power of a Host among VMs
+   * @return the newly created host
+   */
   def createHost(config: Config, vmScheduler: VmSchedulerAbstract): Host = {
     val numOfHostPEs = config.getInt("host.PEs")
     val range = 1 to numOfHostPEs
@@ -56,7 +85,7 @@ object CommonMethods {
     val hostRam = config.getLong("host.RAMInMBs")
     val hostBw = config.getLong("host.BandwidthInMBps")
     val hostStorage = config.getLong("host.StorageInMBs")
-    val host = new HostSimple(hostRam, hostBw, hostStorage, peList.asJava) // default vm scheduler: VmSchedulerSpaceShared
+    val host = new HostSimple(hostRam, hostBw, hostStorage, peList.asJava)
 
     host
       .setRamProvisioner(new ResourceProvisionerSimple())
@@ -64,6 +93,14 @@ object CommonMethods {
       .setVmScheduler(vmScheduler)
   }
 
+  /**
+   * Creates the storage organization of all the datacenters in the system
+   *
+   * @param config           The configuration corresponding to the current simulation
+   * @param numOfDatacenters The total number of datacenters
+   * @param numOfStoredFiles The total number of files to be added to a SAN
+   * @return the list of datacenter storage for all the datacenters
+   */
   def createDatacenterStorage(config: Config, numOfDatacenters: Int, numOfStoredFiles: Int): List[DatacenterStorage] = {
     val numOfSanForDatacenter = config.getInt("datacenter.numOfSanForDatacenter")
     val sanStorageCapacity = config.getLong("datacenter.sanStorageCapacityForDatacenter")
@@ -80,8 +117,14 @@ object CommonMethods {
     }).toList
   }
 
+  /**
+   * Adds the files needed for a simulation to a SAN
+   *
+   * @param config           The configuration corresponding to the current simulation
+   * @param san              The SAN in which the files must be placed
+   * @param numOfStoredFiles The total number of files to be added to the SAN
+   */
   def addFilesToSan(config: Config, san: SanStorage, numOfStoredFiles: Int): Unit = {
-    //val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets") // for every cloudlet relative to the cloud storage service, we add a file for the simulation
     val sizeSmall = config.getInt("datacenter.sanFileSizeInMB_small")
     val sizeMedium = config.getInt("datacenter.sanFileSizeInMB_medium")
     val sizeBig = config.getInt("datacenter.sanFileSizeInMB_big")
@@ -95,6 +138,12 @@ object CommonMethods {
     })
   }
 
+  /**
+   * Maps VmAllocationType values to actual VmAllocation policies
+   *
+   * @param vmAllocationType the value of the VmAllocationType enum to be mapped
+   * @return an instance of VmAllocation
+   */
   private def getVmAllocation(vmAllocationType: VmAllocationType): VmAllocationPolicyAbstract = {
     vmAllocationType match {
       case VmAllocationType.VM_ALLOCATION_SIMPLE => new VmAllocationPolicySimple()
@@ -102,6 +151,12 @@ object CommonMethods {
     }
   }
 
+  /**
+   * Maps VmSchedulerType values to actual VmScheduler policies
+   *
+   * @param vmSchedulerType the value of the VmSchedulerType enum to be mapped
+   * @return an instance of VmScheduler
+   */
   private def getVmScheduler(vmSchedulerType: VmSchedulerType): VmSchedulerAbstract = {
     vmSchedulerType match {
       case VmSchedulerType.VM_SCHEDULER_SPACE_SHARED => new VmSchedulerSpaceShared()
@@ -109,6 +164,12 @@ object CommonMethods {
     }
   }
 
+  /**
+   * Maps CloudletSchedulerType values to actual CloudletScheduler policies
+   *
+   * @param cloudletSchedulerType the value of the CloudletSchedulerType enum to be mapped
+   * @return an instance of CloudletScheduler
+   */
   private def getCloudletScheduler(cloudletSchedulerType: CloudletSchedulerType): CloudletSchedulerAbstract = {
     cloudletSchedulerType match {
       case CloudletSchedulerType.CLOUDLET_SCHEDULER_SPACE_SHARED => new CloudletSchedulerSpaceShared()
@@ -116,6 +177,13 @@ object CommonMethods {
     }
   }
 
+  /**
+   * Maps UtilizationModelType values to actual UtilizationModel policies
+   *
+   * @param utilizationModelType the value of the UtilizationModelType enum to be mapped
+   * @param config               The configuration corresponding to the current simulation
+   * @return an instance of UtilizationModel
+   */
   private def getUtilizationModel(utilizationModelType: UtilizationModelType, config: Config): UtilizationModelAbstract = {
     utilizationModelType match {
       case UtilizationModelType.FULL => new UtilizationModelFull()
@@ -124,6 +192,13 @@ object CommonMethods {
     }
   }
 
+  /**
+   * Creates VMs for SaaS simulations
+   *
+   * @param config            The configuration corresponding to the current simulation
+   * @param cloudletScheduler the scheduler to be used by VMs to execute Cloudlets
+   * @return the list of newly created VMs
+   */
   def createVmsSaaS(config: Config, cloudletScheduler: CloudletSchedulerType): List[Vm] = {
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfVMs = config.getInt("vm.num")
@@ -131,6 +206,12 @@ object CommonMethods {
     range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(getCloudletScheduler(cloudletScheduler))).toList
   }
 
+  /**
+   * Creates Cloudlets for SaaS simulations
+   *
+   * @param config The configuration corresponding to the current simulation
+   * @return the list of newly created Cloudlets
+   */
   def createCloudletsSaaS(config: Config): List[WorkspaceCloudlet] = {
     val numOfEmailCloudlets = config.getInt("cloudlet.numEmailCloudlets")
     val numOfDocsCloudlets = config.getInt("cloudlet.numDocsCloudlets")
@@ -158,10 +239,17 @@ object CommonMethods {
     emailCloudlets ::: docsCloudlets ::: storageCloudlets
   }
 
+  /**
+   * Sets the file requirements for SaaS Cloudlets (i.e., for the cloudlets that implement Cloud Storage)
+   *
+   * @param config       The configuration corresponding to the current simulation
+   * @param cloudletList The list of Cloudlets in the system
+   */
   def setupFileRequirementsForCloudletsSaaS(config: Config, cloudletList: List[WorkspaceCloudlet]): Unit = {
     val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets")
     val range = 1 to numOfStoredFiles
 
+    // We filter to obtain only the Cloud Storage cloudlets and assign file requirements to them
     cloudletList.filter(c => c.typeOfService == TypeOfService.CLOUD_STORAGE).lazyZip(range).map {
       (cloudlet, i) => {
         cloudlet.addRequiredFile(s"file$i.txt");
@@ -169,6 +257,18 @@ object CommonMethods {
     }
   }
 
+  /**
+   * Utility function used to print final costs for VMs
+   *
+   * @param i                   index in VM list (recursive)
+   * @param broker              the broker whose VM must be considered
+   * @param totalCost           partial total cost of VMs
+   * @param processingTotalCost partial total cost of VMs CPUs
+   * @param memoryTotalCost     partial total cost of VMs RAM
+   * @param storageTotalCost    partial total cost of VMs storage
+   * @param bwTotalCost         partial total cost of VMs bandwidth
+   * @param totalNonIdleVms     partial total number of VMs that were active in the simulation
+   */
   def printCost(
                  i: Int,
                  broker: DatacenterBrokerSimple,
@@ -194,7 +294,6 @@ object CommonMethods {
 
     val vm: Vm = broker.getVmCreatedList().get(i);
     val vmCost: VmCost = new VmCost(vm)
-    //println(vmCost)
 
     val newTotalCost: Double = totalCost + vmCost.getTotalCost()
     val newProcessingTotalCost: Double = processingTotalCost + vmCost.getProcessingCost()
@@ -206,25 +305,37 @@ object CommonMethods {
     printCost(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
   }
 
-  // IAAS PAAS FAAS
-
+  /**
+   * Creates VMs for IaaS/PaaS simulations
+   *
+   * @param config The configuration corresponding to the current simulation
+   * @return the newly created VMs
+   */
   def createVmsIaaSPaaS(config: Config): List[Vm] = {
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfStandardVMs = config.getInt("vm.standardVms.num")
-    //val numOfFaasVMs = config.getInt("vm.faasVms.num") // specialized lightweight VMs to run serveless computations
-
     (1 to numOfStandardVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.PEs"))).toList
-    //val faasVms = (1 to numOfFaasVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.faasVms.PEs")).setCloudletScheduler(new CloudletSchedulerSpaceShared())).toList
-
-    //standardVms ::: faasVms
   }
 
+  /**
+   * Creates VMs for FaaS simulations
+   *
+   * @param config The configuration corresponding to the current simulation
+   * @return the newly created VMs
+   */
   def createVmsFaaS(config: Config): List[Vm] = {
     val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
     val numOfFaasVMs = config.getInt("vm.faasVms.num") // specialized lightweight VMs to run serveless computations
     (1 to numOfFaasVMs).map(i => VmWithScalingFactory(scalingStrategyId, config.getInt("vm.faasVms.PEs"))).toList
   }
 
+  /**
+   * Create Cloudlets for IaaS/PaaS simulations
+   *
+   * @param config               The configuration corresponding to the current simulation
+   * @param utilizationModelType The UtilizationModel to be used for cloudlets in the simulation
+   * @return the newly creates Cloudlets
+   */
   def createCloudletsIaaSPaaS(config: Config, utilizationModelType: UtilizationModelType): List[IaasPaasFaasCloudlet] = {
     val numOfIaasCloudlets = config.getInt("cloudlet.iaas.num")
     val numOfPaasCloudlets = config.getInt("cloudlet.paas.num")
@@ -241,6 +352,12 @@ object CommonMethods {
     iaasCloudlets ::: paasCloudlets
   }
 
+  /**
+   * Create Cloudlets for FaaS simulations
+   *
+   * @param config The configuration corresponding to the current simulation
+   * @return the newly creates Cloudlets
+   */
   def createCloudletsFaaS(config: Config): List[IaasPaasFaasCloudlet] = {
     val numOfFaasCloudlets = config.getInt("cloudlet.faas.num")
     val faasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfFaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
