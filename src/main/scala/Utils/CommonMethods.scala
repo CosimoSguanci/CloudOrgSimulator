@@ -2,6 +2,7 @@ package Utils
 
 import com.typesafe.config.Config
 import org.cloudbus.cloudsim.allocationpolicies.{VmAllocationPolicyAbstract, VmAllocationPolicyBestFit, VmAllocationPolicySimple}
+import org.cloudbus.cloudsim.brokers.DatacenterBrokerSimple
 import org.cloudbus.cloudsim.core.CloudSim
 import org.cloudbus.cloudsim.datacenters.network.NetworkDatacenter
 import org.cloudbus.cloudsim.hosts.{Host, HostSimple}
@@ -9,6 +10,7 @@ import org.cloudbus.cloudsim.provisioners.ResourceProvisionerSimple
 import org.cloudbus.cloudsim.resources.*
 import org.cloudbus.cloudsim.schedulers.cloudlet.{CloudletSchedulerAbstract, CloudletSchedulerSpaceShared, CloudletSchedulerTimeShared}
 import org.cloudbus.cloudsim.schedulers.vm.{VmSchedulerAbstract, VmSchedulerSpaceShared, VmSchedulerTimeShared}
+import org.cloudbus.cloudsim.vms.{Vm, VmCost}
 
 import scala.jdk.CollectionConverters.*
 
@@ -110,5 +112,72 @@ object CommonMethods {
       case CloudletSchedulerType.CLOUDLET_SCHEDULER_SPACE_SHARED => new CloudletSchedulerSpaceShared()
       case CloudletSchedulerType.CLOUDLET_SCHEDULER_TIME_SHARED => new CloudletSchedulerTimeShared()
     }
+  }
+
+  def createVmsSaaS(config: Config, cloudletScheduler: CloudletSchedulerType): List[Vm] = {
+    val scalingStrategyId = config.getInt("vm.autoscaling.scalingStrategy");
+    val numOfVMs = config.getInt("vm.num")
+    val range = 1 to numOfVMs
+    range.map(i => VmWithScalingFactory(scalingStrategyId).setCloudletScheduler(getCloudletScheduler(cloudletScheduler))).toList
+  }
+
+  def createCloudletsSaaS(config: Config): List[WorkspaceCloudlet] = {
+    val numOfEmailCloudlets = config.getInt("cloudlet.numEmailCloudlets")
+    val numOfDocsCloudlets = config.getInt("cloudlet.numDocsCloudlets")
+    val numOfStorageCloudlets = config.getInt("cloudlet.numStorageCloudlets")
+
+    val emailCloudlets: List[WorkspaceCloudlet] = (1 to numOfEmailCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.EMAIL)).toList
+    val docsCloudlets: List[WorkspaceCloudlet] = (1 to numOfDocsCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_DOCS)).toList
+    val storageCloudlets: List[WorkspaceCloudlet] = (1 to numOfStorageCloudlets).map(i => new WorkspaceCloudlet(TypeOfService.CLOUD_STORAGE)).toList
+
+    emailCloudlets ::: docsCloudlets ::: storageCloudlets
+  }
+
+  def setupFileRequirementsForCloudletsSaaS(config: Config, cloudletList: List[WorkspaceCloudlet]): Unit = {
+    val numOfStoredFiles = config.getInt("cloudlet.numStorageCloudlets")
+    val range = 1 to numOfStoredFiles
+
+    cloudletList.filter(c => c.typeOfService == TypeOfService.CLOUD_STORAGE).lazyZip(range).map {
+      (cloudlet, i) => {
+        cloudlet.addRequiredFile(s"file$i.txt");
+      }
+    }
+  }
+
+  def printCost(
+                 i: Int,
+                 broker: DatacenterBrokerSimple,
+                 totalCost: Double,
+                 processingTotalCost: Double,
+                 memoryTotalCost: Double,
+                 storageTotalCost: Double,
+                 bwTotalCost: Double,
+                 totalNonIdleVms: Int): Unit = {
+
+    if (i == broker.getVmCreatedList().size()) {
+      // finished iterating over vms, we print the final report
+      println("Total cost ($) for " + totalNonIdleVms +
+        " created VMs: \n" +
+        "processing cost: " + processingTotalCost + "$ \n" +
+        "memory cost: " + memoryTotalCost + "$ \n" +
+        "storage cost: " + storageTotalCost + "$ \n" +
+        "bandwidth cost: " + bwTotalCost + "$ \n" +
+        "total cost: " + totalCost + "$")
+
+      return;
+    }
+
+    val vm: Vm = broker.getVmCreatedList().get(i);
+    val vmCost: VmCost = new VmCost(vm)
+    //println(vmCost)
+
+    val newTotalCost: Double = totalCost + vmCost.getTotalCost()
+    val newProcessingTotalCost: Double = processingTotalCost + vmCost.getProcessingCost()
+    val newMemoryTotalCost: Double = memoryTotalCost + vmCost.getMemoryCost()
+    val newStorageTotalCost: Double = storageTotalCost + vmCost.getStorageCost()
+    val newBwTotalCost: Double = bwTotalCost + vmCost.getBwCost()
+    val newTotalNonIdleVms: Int = if (vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
+
+    printCost(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
   }
 }
