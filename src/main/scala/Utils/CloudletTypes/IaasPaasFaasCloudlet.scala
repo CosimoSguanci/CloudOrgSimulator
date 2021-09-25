@@ -52,7 +52,7 @@ class IaasPaasFaasCloudlet(val deploymentModel: DeploymentModel)
    */
   def getDeploymentModelText(): String = {
     deploymentModel match {
-      case DeploymentModel.IAAS => "Iaas"
+      case DeploymentModel.IAAS => "IaaS"
       case DeploymentModel.PAAS => "PaaS"
       case DeploymentModel.FAAS => "FaaS"
       case _ => "Not specified"

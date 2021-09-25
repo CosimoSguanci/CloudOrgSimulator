@@ -53,7 +53,7 @@ object CommonMethods {
    * @param vmScheduler  The policy that will be used to share processing power of a Host among VMs
    * @return the newly created instance of Datacenter
    */
-  def createDatacenter(config: Config, simulation: CloudSim, vmAllocation: VmAllocationType, vmScheduler: VmSchedulerType): NetworkDatacenter = {
+  private def createDatacenter(config: Config, simulation: CloudSim, vmAllocation: VmAllocationType, vmScheduler: VmSchedulerType): NetworkDatacenter = {
     val numOfHosts = config.getInt("host.num")
     val range = 1 to numOfHosts
     val hostList: List[Host] = range.map(i => createHost(config, getVmScheduler(vmScheduler))).toList
@@ -77,7 +77,7 @@ object CommonMethods {
    * @param vmScheduler The policy that will be used to share processing power of a Host among VMs
    * @return the newly created host
    */
-  def createHost(config: Config, vmScheduler: VmSchedulerAbstract): Host = {
+  private def createHost(config: Config, vmScheduler: VmSchedulerAbstract): Host = {
     val numOfHostPEs = config.getInt("host.PEs")
     val range = 1 to numOfHostPEs
     val peList: List[Pe] = range.map(i => new PeSimple(config.getInt("host.mipsCapacityPE"))).toList
@@ -124,7 +124,7 @@ object CommonMethods {
    * @param san              The SAN in which the files must be placed
    * @param numOfStoredFiles The total number of files to be added to the SAN
    */
-  def addFilesToSan(config: Config, san: SanStorage, numOfStoredFiles: Int): Unit = {
+  private def addFilesToSan(config: Config, san: SanStorage, numOfStoredFiles: Int): Unit = {
     val sizeSmall = config.getInt("datacenter.sanFileSizeInMB_small")
     val sizeMedium = config.getInt("datacenter.sanFileSizeInMB_medium")
     val sizeBig = config.getInt("datacenter.sanFileSizeInMB_big")
@@ -363,5 +363,17 @@ object CommonMethods {
     val faasCloudlets: List[IaasPaasFaasCloudlet] = (1 to numOfFaasCloudlets).map(i => new IaasPaasFaasCloudlet(DeploymentModel.FAAS)).toList
     faasCloudlets.foreach(c => c.setupComputingResources())
     return faasCloudlets
+  }
+
+  /**
+   * Models the realistic behaviour of some cloudlets requiring storage to the datacenter (IaaS/PaaS/FaaS)
+   *
+   * @param cloudletList The list of created cloudlets
+   */
+  def setupFileRequirementsForCloudletsIaaSPaaSFaaS(config: Config, cloudletList: List[IaasPaasFaasCloudlet]): Unit = {
+    val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
+    val range = 1 to numOfStoredFiles
+
+    range.foreach(i => cloudletList(i).addRequiredFile(s"file$i.txt"));
   }
 }

@@ -79,7 +79,7 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
      * Call to the method that creates the datacenter storage together with SANs and associated files,
      * that will be then required by a subset of the total number of cloudlets in the system
      */
-    setupFileRequirementsForCloudlets(cloudletList)
+    CommonMethods.setupFileRequirementsForCloudletsIaaSPaaSFaaS(config, cloudletList)
 
     logger.info("All files to some Cloudlets to be requested")
 
@@ -140,18 +140,6 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
       brokerIaasPaaS.submitCloudletList(newCloudlets.asJava)
       brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
     }
-  }
-
-  /**
-   * Models the realistic behaviour of some cloudlets requiring storage to the datacenter
-   *
-   * @param cloudletList The list of created cloudlets
-   */
-  def setupFileRequirementsForCloudlets(cloudletList: List[IaasPaasFaasCloudlet]): Unit = {
-    val numOfStoredFiles = config.getInt("datacenter.numOfStoredFiles")
-    val range = 1 to numOfStoredFiles
-
-    range.foreach(i => cloudletList(i).addRequiredFile(s"file$i.txt"));
   }
 
   /**
