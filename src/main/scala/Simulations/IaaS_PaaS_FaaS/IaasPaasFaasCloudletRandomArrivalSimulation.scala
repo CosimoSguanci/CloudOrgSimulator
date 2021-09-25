@@ -108,9 +108,9 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
 
     //cloudletsTableBuilder.build()
 
-    printCost(i = 0, brokerIaasPaaS, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    CommonMethods.printCost(i = 0, brokerIaasPaaS, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
     println()
-    printCost(i = 0, brokerFaas, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
+    CommonMethods.printCost(i = 0, brokerFaas, totalCost = 0, memoryTotalCost = 0, processingTotalCost = 0, storageTotalCost = 0, bwTotalCost = 0, totalNonIdleVms = 0)
     println()
     println("Total number of finished cloudlets: " + (finishedCloudlets.size()))
 
@@ -140,54 +140,5 @@ object IaasPaasFaasCloudletRandomArrivalSimulation:
       brokerIaasPaaS.submitCloudletList(newCloudlets.asJava)
       brokerFaas.submitCloudletList(newFaasCloudlets.asJava)
     }
-  }
-
-  /**
-   * Print total costs for running the system. In this case is used to print both the costs for IaaS/PaaS and FaaS
-   *
-   * @param i                   index for the recursion
-   * @param broker              the broker to be considered to compute costs
-   * @param totalCost           partial total cost
-   * @param processingTotalCost partial total processing cost
-   * @param memoryTotalCost     partial total memory cost
-   * @param storageTotalCost    partial total storage cost
-   * @param bwTotalCost         partial total bandwidth cost
-   * @param totalNonIdleVms     partial total number of created VMs that weren't idle during the simulation
-   */
-  def printCost(
-                 i: Int,
-                 broker: DatacenterBrokerSimple,
-                 totalCost: Double,
-                 processingTotalCost: Double,
-                 memoryTotalCost: Double,
-                 storageTotalCost: Double,
-                 bwTotalCost: Double,
-                 totalNonIdleVms: Int): Unit = {
-
-    if (i == broker.getVmCreatedList().size()) {
-      // finished iterating over vms, we print the final report
-      println("Total cost ($) for " + totalNonIdleVms +
-        " created VMs: \n" +
-        "processing cost: " + processingTotalCost + "$ \n" +
-        "memory cost: " + memoryTotalCost + "$ \n" +
-        "storage cost: " + storageTotalCost + "$ \n" +
-        "bandwidth cost: " + bwTotalCost + "$ \n" +
-        "total cost: " + totalCost + "$")
-
-      return
-    }
-
-    val vm: Vm = broker.getVmCreatedList().get(i)
-    val vmCost: VmCost = new VmCost(vm)
-    //println(vmCost)
-
-    val newTotalCost: Double = totalCost + vmCost.getTotalCost()
-    val newProcessingTotalCost: Double = processingTotalCost + vmCost.getProcessingCost()
-    val newMemoryTotalCost: Double = memoryTotalCost + vmCost.getMemoryCost()
-    val newStorageTotalCost: Double = storageTotalCost + vmCost.getStorageCost()
-    val newBwTotalCost: Double = bwTotalCost + vmCost.getBwCost()
-    val newTotalNonIdleVms: Int = if (vm.getTotalExecutionTime() > 0) then totalNonIdleVms + 1 else totalNonIdleVms
-
-    printCost(i + 1, broker, newTotalCost, newProcessingTotalCost, newMemoryTotalCost, newStorageTotalCost, newBwTotalCost, newTotalNonIdleVms)
   }
 
