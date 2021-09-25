@@ -100,7 +100,7 @@ Time to execute all cloudlets: 40 s
 Total cost: 5733$
 ```
 
-This is due to the fact that in the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicate a small slice time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
+This is due to the fact that with the time-shared scheduler we are trying to be "fair" in the provision of resources by dedicainge a small slice of time to all the cloudlets that are requesting a certain VM and continuously alternating them, therefore not creating waiting lists. In the previous simulation, this policy was leading to fast degradation of resource whenever #VM < #cloudlets, that is a realistic situation since in SaaS we (as cloud providers) are in charge of handling the scaling of resources, and it is very likely to have unexpected "spikes" in workload. On the other hand, a space-shared scheduler enables the use of a waiting list of cloudlets to access resource, also reducing the overhead that is generated to continuously switch the cloudlet that is assigned to a VM.
 
 ### SaasWorkspaceSimulationVmSchedulerTimeShared
 
@@ -122,6 +122,8 @@ We can notice that, in this case, we have 20 PEs available in hosts but the cumu
 Time to execute all cloudlets: 40 s
 Total cost: 1886.47$
 ```
+
+On the other hand, using `VmSchedulerSpaceShared` in this situation causes the simulation to fail even to finish in a reasonable amount of time.
 
 ### IaaS / PaaS / FaaS
 The second category of simulation that have been performed regard a cloud model that resembles a subset of the services offered by AWS. In particular, with respect to the previous simulation, this model is implementing a scenario of a larger scale, offering more flexible services.
@@ -195,7 +197,7 @@ Total number of finished cloudlets: 32780
 The results show higher cost with respect to the simulation with `UtilizationModelStochastic`. This is probably due to the fact that performing an efficient vertical scaling is more difficult in this setting, therefore if before the resources were downscaled at the start of the simulation and then substantially left unchanged, now the resources must be continuously added and removed from the system. This leads to over-provisioning of resources and overhead for allocation/deallocating them, that is reflected by the higher cloudlet maximum execution time.
 
 ## IaasPaasFaasCloudletRandomArrivalSimulation
-In this case the main result that we're investigating is how many cloudlets can be completed in a fixed amount of time (on average) when the arrival of new cloudlet is modelled as a random process. 
+In this case the main result that we're investigating is how many cloudlets can be completed in a fixed amount of time (on average) when the arrival of new cloudlets is modelled as a random process. 
 That is, every time the simulation clock advances, with probability configurable in the .conf file, we're creating new cloudlets and submitting them to the broker. The objective here is to evaluate how different autoscaling techniques behave in this scenario, starting from a situation in which few resources are provisioned.
 
 ### Main parameters
