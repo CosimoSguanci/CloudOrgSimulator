@@ -155,7 +155,7 @@ object VmWithScalingFactory {
       ramVerticalScaling.setLowerThresholdFunction(lowerThresholdFunction)
       ramVerticalScaling.setUpperThresholdFunction(upperThresholdFunction)
 
-      vm.setPeVerticalScaling(ramVerticalScaling);
+      vm.setRamVerticalScaling(ramVerticalScaling);
     }
 
     if (bwVerticalScalingEnabled) {
@@ -173,7 +173,7 @@ object VmWithScalingFactory {
       bwVerticalScaling.setLowerThresholdFunction(lowerThresholdFunction)
       bwVerticalScaling.setUpperThresholdFunction(upperThresholdFunction)
 
-      vm.setPeVerticalScaling(bwVerticalScaling);
+      vm.setBwVerticalScaling(bwVerticalScaling);
     }
 
     return vm

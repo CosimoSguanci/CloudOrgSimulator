@@ -14,7 +14,6 @@ class MapReduceCloudlet(val typeOfMapReduceTask: TypeOfMapReduceTask)
     config.getInt("cloudlet.defaultPEs"),
   ) { // new UtilizationModelDynamic(config.getDouble("utilizationRatio"))
 
-
   def getTypeOfMapReduceTaskText(): String = {
     typeOfMapReduceTask match {
       case TypeOfMapReduceTask.MAPPER => "MAPPER"
