@@ -318,7 +318,7 @@ object CommonMethods {
   }
 
   /**
-   * Creates VMs for FaaS simulations
+   * Creates VMs for FaaS simulations. FaaS applications run on specific lightweight VMs.
    *
    * @param config The configuration corresponding to the current simulation
    * @return the newly created VMs

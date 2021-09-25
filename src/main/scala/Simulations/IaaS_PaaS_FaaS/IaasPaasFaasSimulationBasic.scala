@@ -54,6 +54,9 @@ object IaasPaasFaasSimulationBasic:
 
   val simulation = new CloudSim()
   val brokerIaasPaaS = new DatacenterBrokerSimple(simulation)
+  
+  // FaaS applications run on specific lightweight VMs, therefore brokerFaas is responsible for allocating FaaS cloudlets
+  // to the right VMs
   val brokerFaas = new DatacenterBrokerSimple(simulation)
 
   def Start() = {
