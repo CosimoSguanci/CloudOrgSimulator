@@ -1,9 +1,10 @@
 # Overview
 ## Implemented cloud models
+
 - A SaaS infrastructure inspired by Google Workspace. It was modeled from the point of view of the service provider that is offering some type of cloud services (in particular email, cloud docs and cloud storage) to an organization (such as another company that uses them as a business tools)
 - An IaaS/PaaS/FaaS infrastructure that resembles a subset of Amazon Web Services
 
-Once these models have been built, they have been simulated under several conditions: different workloads, different policies for allocation of resource and scaling strategies.
+For each of the implemented models, some variants have been explored, with different datacenter characteristics in order to match the requirements. Once these models have been built, they have been simulated under several conditions: different workloads, different policies for allocation of resource and scaling strategies. 
 
 In all the simulations, a configuration-oriented approach has been employed, to achieve high parameterizable and customizable simulations. Some example of parameters included in the configurations are:
 - Datacenter parameters, costs for unit of resources, SAN storage details
